@@ -42,16 +42,7 @@ hutch import /path/to/cvevolve/session --format cvevolve --include-audit
 
 ## A real run in the dashboard
 
-The screenshots below use a CVEvolve peak-detection session. The run has
-15 candidates, 14 operators, 15 fitness samples, and 2,706 imported
-audit messages. CVEvolve explored a baseline, generated proposals,
-tuning steps, and crossover rounds.
-
-![CVEvolve peak detection run in the Hutch run list](../assets/screenshots/cvevolve-runs-list.png)
-*CVEvolve imports show up in the normal run list with project, status,
-event count, and inferred system kind. The peak-detection and XRF runs
-are both classified as evolutionary.*
-
+The screenshots below use a CVEvolve peak-detection session.
 The Overview tab is meant to answer the first questions a researcher
 asks when opening a run: how many candidates were explored, which search
 operators were used, how much fitness evidence exists, and how the run
