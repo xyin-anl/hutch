@@ -1,0 +1,3097 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Observability, steering, and provenance for autonomous-research agents.">
+      
+      
+        <meta name="author" content="The Hutch contributors">
+      
+      
+        <link rel="canonical" href="https://xyin-anl.github.io/hutch/schema/">
+      
+      
+        <link rel="prev" href="../distribution/">
+      
+      
+        <link rel="next" href="../adapters/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Event schema - The Hutch</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../stylesheets/extra.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#canonical-event-schema" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="The Hutch" class="md-header__button md-logo" aria-label="The Hutch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            The Hutch
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Event schema
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="white" data-md-color-accent="green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/xyin-anl/hutch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    xyin-anl/hutch
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../concepts/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Concepts
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../distribution/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Distribution
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="./" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../otel/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Integrations
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../security/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../blog/2026-05-11-cvevolve-live-dashboard/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Blog
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="The Hutch" class="md-nav__button md-logo" aria-label="The Hutch" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    The Hutch
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/xyin-anl/hutch" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    xyin-anl/hutch
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../concepts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Concepts
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../distribution/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Distribution
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Event schema
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Event schema
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#schema-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema invariants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#literal-kind-enums" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Literal kind enums
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Literal kind enums">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#individualkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IndividualKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operatorkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OperatorKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#populationkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PopulationKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluatorkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvaluatorKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifactkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ArtifactKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descriptorarchivekind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DescriptorArchiveKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidencestance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvidenceStance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selfmodverdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelfModVerdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steeringactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SteeringActor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steeringcommandkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SteeringCommandKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RunStatus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event variants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event variants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_start-runstartevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_start" (RunStartEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_update-runupdateevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_update" (RunUpdateEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_end-runendevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_end" (RunEndEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-individual-individualevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "individual" (IndividualEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-operator-operatorevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "operator" (OperatorEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-fitness-fitnessevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "fitness" (FitnessEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-descriptor-descriptorevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "descriptor" (DescriptorEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-lineage_edge-lineageedgeevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "lineage_edge" (LineageEdgeEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-migration-migrationevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "migration" (MigrationEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-self_mod-selfmodevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "self_mod" (SelfModEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-artifact-artifactevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "artifact" (ArtifactEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-claim-claimevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "claim" (ClaimEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-evidence-evidenceevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "evidence" (EvidenceEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-review-reviewevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "review" (ReviewEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-stream_event-streameventevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "stream_event" (StreamEventEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-steering_command-steeringcommandevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "steering_command" (SteeringCommandEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-tree_expansion-treeexpansionevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "tree_expansion" (TreeExpansionEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-archive_snapshot-archivesnapshotevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "archive_snapshot" (ArchiveSnapshotEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-pareto_snapshot-paretosnapshotevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "pareto_snapshot" (ParetoSnapshotEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adapters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adapters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../steering/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Steering
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integrations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integrations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../otel/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenTelemetry
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../openlineage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OpenLineage
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../publication/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Publication & provenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../security/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blog
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Blog
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../blog/2026-05-11-cvevolve-live-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CVEvolve live dashboard (May 2026)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../blog/2026-05-06-hutch-v0.1.0/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    v0.1.0 launch (May 2026)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#schema-invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Schema invariants
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#literal-kind-enums" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Literal kind enums
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Literal kind enums">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#individualkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        IndividualKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#operatorkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        OperatorKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#populationkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        PopulationKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evaluatorkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvaluatorKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#artifactkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ArtifactKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#descriptorarchivekind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DescriptorArchiveKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#evidencestance" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        EvidenceStance
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#selfmodverdict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SelfModVerdict
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steeringactor" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SteeringActor
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steeringcommandkind" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        SteeringCommandKind
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#runstatus" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        RunStatus
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#event-variants" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Event variants
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Event variants">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_start-runstartevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_start" (RunStartEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_update-runupdateevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_update" (RunUpdateEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-run_end-runendevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "run_end" (RunEndEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-individual-individualevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "individual" (IndividualEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-operator-operatorevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "operator" (OperatorEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-fitness-fitnessevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "fitness" (FitnessEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-descriptor-descriptorevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "descriptor" (DescriptorEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-lineage_edge-lineageedgeevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "lineage_edge" (LineageEdgeEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-migration-migrationevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "migration" (MigrationEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-self_mod-selfmodevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "self_mod" (SelfModEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-artifact-artifactevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "artifact" (ArtifactEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-claim-claimevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "claim" (ClaimEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-evidence-evidenceevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "evidence" (EvidenceEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-review-reviewevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "review" (ReviewEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-stream_event-streameventevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "stream_event" (StreamEventEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-steering_command-steeringcommandevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "steering_command" (SteeringCommandEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-tree_expansion-treeexpansionevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "tree_expansion" (TreeExpansionEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-archive_snapshot-archivesnapshotevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "archive_snapshot" (ArchiveSnapshotEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#event_kind-pareto_snapshot-paretosnapshotevent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        event_kind = "pareto_snapshot" (ParetoSnapshotEvent)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/xyin-anl/hutch/edit/main/docs/schema.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="canonical-event-schema">Canonical event schema<a class="headerlink" href="#canonical-event-schema" title="Anchor link to this section">&para;</a></h1>
+<blockquote>
+<p><strong>Auto-generated from <code>hutch-py/src/hutch/schema/</code>.</strong>
+To regenerate, run <code>python -m hutch.schema._docgen</code> from <code>hutch-py/</code>.</p>
+</blockquote>
+<p>This page is the field-level reference for every event a Hutch run
+can produce. For the higher-level meaning of each field, see
+<a href="../concepts/">Concepts</a>.</p>
+<p>From v0.1.0 onward, the schema is <strong>additive-only</strong> between minor
+releases. New optional fields and new <code>kind</code> enum values are fine.
+Renaming or removing an existing field is a breaking change and
+requires a migration in <code>hutch-py/src/hutch/store/migrations/</code>.</p>
+<h2 id="schema-invariants">Schema invariants<a class="headerlink" href="#schema-invariants" title="Anchor link to this section">&para;</a></h2>
+<ul>
+<li>Every Individual has at least one <code>parent_id</code>, or <code>is_seed=True</code>.</li>
+<li>A Fitness event with a non-null <code>invalid_reason</code> may have empty
+  <code>scores</code>. Otherwise <code>scores</code> must be non-empty.</li>
+<li>A Pareto-front snapshot must list at least one id.</li>
+<li>If both are supplied, a Descriptor's <code>coordinates</code> length must
+  match the length of its <code>dimensions</code>.</li>
+<li>Archive coverage is in <code>[0, 1]</code>.</li>
+<li><code>parent_ids</code> may have any length: 0 for a seed, 1 for a refine or
+  mutation, 2 for a crossover, more for an ensemble or distillation.</li>
+</ul>
+<h2 id="literal-kind-enums">Literal kind enums<a class="headerlink" href="#literal-kind-enums" title="Anchor link to this section">&para;</a></h2>
+<h3 id="individualkind"><code>IndividualKind</code><a class="headerlink" href="#individualkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>program</code>, <code>prompt</code>, <code>architecture</code>, <code>reward_function</code>, <code>agent</code>, <code>environment</code>, <code>theorem</code>, <code>proof_state</code>, <code>dataset</code>, <code>skill</code>, <code>model_weights</code>, <code>paper</code>, <code>hypothesis</code>, <code>experiment_plan</code>, <code>claim</code>, <code>evidence</code>, <code>review</code></p>
+<h3 id="operatorkind"><code>OperatorKind</code><a class="headerlink" href="#operatorkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>mutate</code>, <code>crossover</code>, <code>select</code>, <code>refine</code>, <code>diversify</code>, <code>self_modify</code>, <code>propose</code>, <code>distill</code>, <code>migrate</code>, <code>meta_mutate</code>, <code>tree_expand</code>, <code>edit_diff</code>, <code>evaluate</code>, <code>review</code></p>
+<h3 id="populationkind"><code>PopulationKind</code><a class="headerlink" href="#populationkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>linear</code>, <code>island</code>, <code>map_elites</code>, <code>tree</code>, <code>swarm</code>, <code>archive</code></p>
+<h3 id="evaluatorkind"><code>EvaluatorKind</code><a class="headerlink" href="#evaluatorkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>deterministic_metric</code>, <code>unit_test</code>, <code>benchmark</code>, <code>llm_judge</code>, <code>human</code>, <code>wet_lab</code>, <code>simulator</code>, <code>proof_checker</code></p>
+<h3 id="artifactkind"><code>ArtifactKind</code><a class="headerlink" href="#artifactkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>program</code>, <code>prompt</code>, <code>architecture</code>, <code>theorem</code>, <code>dataset</code>, <code>environment</code>, <code>reward_function</code>, <code>agent</code>, <code>paper</code>, <code>skill</code>, <code>proof</code>, <code>benchmark</code>, <code>repo</code>, <code>ara_package</code></p>
+<h3 id="descriptorarchivekind"><code>DescriptorArchiveKind</code><a class="headerlink" href="#descriptorarchivekind" title="Anchor link to this section">&para;</a></h3>
+<p><code>grid</code>, <code>cvt</code>, <code>aurora</code></p>
+<h3 id="evidencestance"><code>EvidenceStance</code><a class="headerlink" href="#evidencestance" title="Anchor link to this section">&para;</a></h3>
+<p><code>supports</code>, <code>contradicts</code>, <code>mentions</code></p>
+<h3 id="selfmodverdict"><code>SelfModVerdict</code><a class="headerlink" href="#selfmodverdict" title="Anchor link to this section">&para;</a></h3>
+<p><code>accepted</code>, <code>rejected</code>, <code>pending</code></p>
+<h3 id="steeringactor"><code>SteeringActor</code><a class="headerlink" href="#steeringactor" title="Anchor link to this section">&para;</a></h3>
+<p><code>human</code>, <code>agent</code>, <code>policy</code></p>
+<h3 id="steeringcommandkind"><code>SteeringCommandKind</code><a class="headerlink" href="#steeringcommandkind" title="Anchor link to this section">&para;</a></h3>
+<p><code>cancel_individual</code>, <code>freeze_island</code>, <code>fork_from</code>, <code>override_param</code>, <code>pause_run</code>, <code>resume_run</code>, <code>cancel_self_mod</code>, <code>approve_hitl</code>, <code>inject_hint</code></p>
+<h3 id="runstatus"><code>RunStatus</code><a class="headerlink" href="#runstatus" title="Anchor link to this section">&para;</a></h3>
+<p><code>running</code>, <code>finished</code>, <code>failed</code>, <code>cancelled</code></p>
+<h2 id="event-variants">Event variants<a class="headerlink" href="#event-variants" title="Anchor link to this section">&para;</a></h2>
+<p>Every event has a fixed envelope plus a typed payload. The envelope:</p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>event_id</code></td>
+<td><code>UUID</code></td>
+<td>auto</td>
+<td>Unique event identifier (default: random UUIDv4).</td>
+</tr>
+<tr>
+<td><code>event_kind</code></td>
+<td><code>EventKind</code></td>
+<td>yes</td>
+<td>Discriminator: selects the payload type.</td>
+</tr>
+<tr>
+<td><code>run_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>Owning run.</td>
+</tr>
+<tr>
+<td><code>timestamp_ns</code></td>
+<td><code>int</code></td>
+<td>auto</td>
+<td>UNIX time in nanoseconds (default: now).</td>
+</tr>
+<tr>
+<td><code>stream_id</code></td>
+<td><code>str?</code></td>
+<td>no</td>
+<td>Swimlane / worker label.</td>
+</tr>
+<tr>
+<td><code>worker_id</code></td>
+<td><code>str?</code></td>
+<td>no</td>
+<td>Concrete worker / process / agent.</td>
+</tr>
+<tr>
+<td><code>span_id</code></td>
+<td><code>str?</code></td>
+<td>no</td>
+<td>OTel span id, if also emitted to OTel.</td>
+</tr>
+<tr>
+<td><code>trace_id</code></td>
+<td><code>str?</code></td>
+<td>no</td>
+<td>OTel trace id, if also emitted to OTel.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-run_start-runstartevent"><code>event_kind = "run_start"</code> (<code>RunStartEvent</code>)<a class="headerlink" href="#event_kind-run_start-runstartevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>RunStartPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>project</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>started_by</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>Free-form actor identifier (user, CI job, agent id).</td>
+</tr>
+<tr>
+<td><code>git_commit</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td><code>dict[str, bool]</code></td>
+<td>no</td>
+<td>Truthful dashboard capabilities declared by the producer. Common keys include <code>steering</code>, <code>llm_usage</code>, <code>live_updates</code>, and <code>audit</code>. Absent keys mean unsupported or not logged, never implicitly true.</td>
+</tr>
+<tr>
+<td><code>score_directions</code></td>
+<td><code>dict[str, Literal['higher', 'lower']]</code></td>
+<td>no</td>
+<td>Per-metric optimisation direction — <code>higher</code> (higher is better) or <code>lower</code> (lower is better). Used by the dashboard's Pareto frontier, best-composite aggregation, and any other consumer that needs to know which way is up. Declare every metric you log under <code>FitnessPayload.scores</code>. Unmatched metrics fall back to a name-based heuristic in the UI.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-run_update-runupdateevent"><code>event_kind = "run_update"</code> (<code>RunUpdateEvent</code>)<a class="headerlink" href="#event_kind-run_update-runupdateevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>RunUpdatePayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>Optional[Literal['running', 'finished', 'failed', 'cancelled']]</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>config</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td><code>dict[str, bool]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>score_directions</code></td>
+<td><code>dict[str, Literal['higher', 'lower']]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>source_counts</code></td>
+<td><code>dict[str, int]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>watcher</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-run_end-runendevent"><code>event_kind = "run_end"</code> (<code>RunEndEvent</code>)<a class="headerlink" href="#event_kind-run_end-runendevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>RunEndPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>Literal['running', 'finished', 'failed', 'cancelled']</code></td>
+<td>no</td>
+<td>'finished'</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-individual-individualevent"><code>event_kind = "individual"</code> (<code>IndividualEvent</code>)<a class="headerlink" href="#event_kind-individual-individualevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>IndividualPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>Literal['program', 'prompt', 'architecture', 'reward_function', 'agent', 'environment', 'theorem', 'proof_state', 'dataset', 'skill', 'model_weights', 'paper', 'hypothesis', 'experiment_plan', 'claim', 'evidence', 'review']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>parent_ids</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>Zero or more parent Individual ids. Empty iff <code>is_seed</code> is True.</td>
+</tr>
+<tr>
+<td><code>is_seed</code></td>
+<td><code>bool</code></td>
+<td>no</td>
+<td>False</td>
+</tr>
+<tr>
+<td><code>genome_uri</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>genome_hash</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>Optional SHA-256 hex digest for <code>genome_uri</code> content.</td>
+</tr>
+<tr>
+<td><code>genome_lang</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>population_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>island_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>generation_index</code></td>
+<td><code>int | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-operator-operatorevent"><code>event_kind = "operator"</code> (<code>OperatorEvent</code>)<a class="headerlink" href="#event_kind-operator-operatorevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>OperatorPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>Literal['mutate', 'crossover', 'select', 'refine', 'diversify', 'self_modify', 'propose', 'distill', 'migrate', 'meta_mutate', 'tree_expand', 'edit_diff', 'evaluate', 'review']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>parent_ids</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>[]</td>
+</tr>
+<tr>
+<td><code>child_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>prompt_template</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>llm_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>llm_temperature</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>diff</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>Inline diff text; for large diffs prefer <code>diff_uri</code>.</td>
+</tr>
+<tr>
+<td><code>diff_uri</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>cost_usd</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>tokens_in</code></td>
+<td><code>int | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>tokens_out</code></td>
+<td><code>int | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-fitness-fitnessevent"><code>event_kind = "fitness"</code> (<code>FitnessEvent</code>)<a class="headerlink" href="#event_kind-fitness-fitnessevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>FitnessPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>individual_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>evaluator_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>evaluator_kind</code></td>
+<td><code>Literal['deterministic_metric', 'unit_test', 'benchmark', 'llm_judge', 'human', 'wet_lab', 'simulator', 'proof_checker']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>scores</code></td>
+<td><code>dict[str, float]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>composite</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>cascade_stage</code></td>
+<td><code>int | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>is_pareto_front</code></td>
+<td><code>bool | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>dominates</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>[]</td>
+</tr>
+<tr>
+<td><code>invalid_reason</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>If set, this evaluation is considered failed; <code>scores</code> may be empty.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-descriptor-descriptorevent"><code>event_kind = "descriptor"</code> (<code>DescriptorEvent</code>)<a class="headerlink" href="#event_kind-descriptor-descriptorevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>DescriptorPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>individual_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>archive_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>Literal['grid', 'cvt', 'aurora']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>dimensions</code></td>
+<td><code>list[str] | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>coordinates</code></td>
+<td><code>list[float]</code></td>
+<td>no</td>
+<td>[]</td>
+</tr>
+<tr>
+<td><code>cell_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>is_replaced</code></td>
+<td><code>bool</code></td>
+<td>no</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-lineage_edge-lineageedgeevent"><code>event_kind = "lineage_edge"</code> (<code>LineageEdgeEvent</code>)<a class="headerlink" href="#event_kind-lineage_edge-lineageedgeevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>LineageEdgePayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>child_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>relation</code></td>
+<td><code>str</code></td>
+<td>no</td>
+<td>'parent'</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-migration-migrationevent"><code>event_kind = "migration"</code> (<code>MigrationEvent</code>)<a class="headerlink" href="#event_kind-migration-migrationevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>MigrationPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>population_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>from_island</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>to_island</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>individual_ids</code></td>
+<td><code>list[str]</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>trigger</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-self_mod-selfmodevent"><code>event_kind = "self_mod"</code> (<code>SelfModEvent</code>)<a class="headerlink" href="#event_kind-self_mod-selfmodevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>SelfModPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>parent_agent_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>child_agent_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>target_path</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>diff_uri</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>proposal</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>overseer_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>overseer_verdict</code></td>
+<td><code>Literal['accepted', 'rejected', 'pending']</code></td>
+<td>no</td>
+<td>'pending'</td>
+</tr>
+<tr>
+<td><code>benchmark</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>score_before</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>score_after</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-artifact-artifactevent"><code>event_kind = "artifact"</code> (<code>ArtifactEvent</code>)<a class="headerlink" href="#event_kind-artifact-artifactevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>ArtifactPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>kind</code></td>
+<td><code>Literal['program', 'prompt', 'architecture', 'theorem', 'dataset', 'environment', 'reward_function', 'agent', 'paper', 'skill', 'proof', 'benchmark', 'repo', 'ara_package']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>uri</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>hash</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>Optional SHA-256 hex digest for <code>uri</code> content.</td>
+</tr>
+<tr>
+<td><code>format</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>parent_artifact_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>ara_layer</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>Optional ARA-package layer label.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-claim-claimevent"><code>event_kind = "claim"</code> (<code>ClaimEvent</code>)<a class="headerlink" href="#event_kind-claim-claimevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>ClaimPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>supported_by</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>[]</td>
+</tr>
+<tr>
+<td><code>requires_reproduction</code></td>
+<td><code>bool</code></td>
+<td>no</td>
+<td>False</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-evidence-evidenceevent"><code>event_kind = "evidence"</code> (<code>EvidenceEvent</code>)<a class="headerlink" href="#event_kind-evidence-evidenceevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>EvidencePayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>claim_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>source_uri</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>stance</code></td>
+<td><code>Literal['supports', 'contradicts', 'mentions']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>confidence</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>source_quality</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-review-reviewevent"><code>event_kind = "review"</code> (<code>ReviewEvent</code>)<a class="headerlink" href="#event_kind-review-reviewevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>ReviewPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>target_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>scorer</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>scores</code></td>
+<td><code>dict[str, float]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>concerns</code></td>
+<td><code>list[str]</code></td>
+<td>no</td>
+<td>[]</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-stream_event-streameventevent"><code>event_kind = "stream_event"</code> (<code>StreamEventEvent</code>)<a class="headerlink" href="#event_kind-stream_event-streameventevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>StreamEventPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>label</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>text</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-steering_command-steeringcommandevent"><code>event_kind = "steering_command"</code> (<code>SteeringCommandEvent</code>)<a class="headerlink" href="#event_kind-steering_command-steeringcommandevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>SteeringCommandPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>command</code></td>
+<td><code>Literal['cancel_individual', 'freeze_island', 'fork_from', 'override_param', 'pause_run', 'resume_run', 'cancel_self_mod', 'approve_hitl', 'inject_hint']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>target_id</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>params</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>{}</td>
+</tr>
+<tr>
+<td><code>actor</code></td>
+<td><code>Literal['human', 'agent', 'policy']</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-tree_expansion-treeexpansionevent"><code>event_kind = "tree_expansion"</code> (<code>TreeExpansionEvent</code>)<a class="headerlink" href="#event_kind-tree_expansion-treeexpansionevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>TreeExpansionPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>tree_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>parent_node</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>child_node</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>visit_count</code></td>
+<td><code>int</code></td>
+<td>no</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>value_estimate</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>virtual_loss</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-archive_snapshot-archivesnapshotevent"><code>event_kind = "archive_snapshot"</code> (<code>ArchiveSnapshotEvent</code>)<a class="headerlink" href="#event_kind-archive_snapshot-archivesnapshotevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>ArchiveSnapshotPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>archive_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>coverage</code></td>
+<td><code>float</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>qd_score</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>max_fitness</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+<tr>
+<td><code>size</code></td>
+<td><code>int</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>snapshot_uri</code></td>
+<td><code>str | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+<h3 id="event_kind-pareto_snapshot-paretosnapshotevent"><code>event_kind = "pareto_snapshot"</code> (<code>ParetoSnapshotEvent</code>)<a class="headerlink" href="#event_kind-pareto_snapshot-paretosnapshotevent" title="Anchor link to this section">&para;</a></h3>
+<p><strong>Payload:</strong> <code>ParetoSnapshotPayload</code></p>
+<table>
+<thead>
+<tr>
+<th>field</th>
+<th>type</th>
+<th>required</th>
+<th>description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>no</td>
+<td>Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model.</td>
+</tr>
+<tr>
+<td><code>population_id</code></td>
+<td><code>str</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>front</code></td>
+<td><code>list[str]</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>objectives</code></td>
+<td><code>list[str]</code></td>
+<td>yes</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>hypervolume</code></td>
+<td><code>float | None</code></td>
+<td>no</td>
+<td>None</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../distribution/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Distribution">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Distribution
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../adapters/" class="md-footer__link md-footer__link--next" aria-label="Next: Adapters">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Adapters
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; The Hutch contributors. Apache-2.0.
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/xyin-anl/hutch" target="_blank" rel="noopener" title="Hutch on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://pypi.org/project/thehutch/" target="_blank" rel="noopener" title="thehutch on PyPI" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.top", "navigation.tracking", "navigation.footer", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.action.edit", "toc.follow"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
