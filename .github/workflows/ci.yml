@@ -19,7 +19,7 @@ jobs:
     name: Source hygiene
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           # Gitleaks needs full history to scan the diff between the pushed
           # commits and their parents. Shallow clone breaks
@@ -74,10 +74,10 @@ jobs:
       run:
         working-directory: hutch-py
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v3
+        uses: astral-sh/setup-uv@v8
         with:
           enable-cache: true
           cache-dependency-glob: hutch-py/pyproject.toml
@@ -113,13 +113,13 @@ jobs:
       run:
         working-directory: hutch-ui
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10.33.2
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: "20"
           cache: pnpm

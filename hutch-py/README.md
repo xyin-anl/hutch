@@ -1,5 +1,11 @@
 # thehutch
 
+[![PyPI](https://img.shields.io/pypi/v/thehutch.svg)](https://pypi.org/p/thehutch)
+[![CI](https://github.com/xyin-anl/hutch/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/xyin-anl/hutch/actions/workflows/ci.yml)
+[![Docs](https://img.shields.io/badge/docs-xyin--anl.github.io%2Fhutch-blue)](https://xyin-anl.github.io/hutch/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache_2.0-blue.svg)](https://github.com/xyin-anl/hutch/blob/main/LICENSE)
+[![Python](https://img.shields.io/pypi/pyversions/thehutch.svg)](https://pypi.org/p/thehutch)
+
 > Observability, steering, and provenance for autonomous-research agents.
 
 `thehutch` is the PyPI distribution for [Hutch](https://github.com/xyin-anl/hutch) —
