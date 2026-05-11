@@ -115,6 +115,395 @@ class RunSummary(BaseModel):
     status: str | None = None
     event_count: int
     kinds_seen: list[str] = Field(default_factory=list)
+    capabilities: dict[str, bool] = Field(default_factory=dict)
+    system_kind: Literal["unknown", "linear", "evolutionary", "self-improving", "tree-search"] = (
+        "unknown"
+    )
+
+
+class StreamEventsResponse(BaseModel):
+    """Paged stream-event response for high-volume audit views."""
+
+    events: list[dict[str, Any]]
+    total: int
+    offset: int
+    limit: int
+
+
+def _json_payload_to_dict(raw: Any) -> dict[str, Any]:
+    if isinstance(raw, str):
+        try:
+            parsed = json.loads(raw)
+        except json.JSONDecodeError:
+            return {}
+    else:
+        parsed = raw
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def _run_system_kind(
+    conn: DuckConn,
+    run_id: str,
+    kinds_seen: list[str] | None = None,
+) -> Literal["unknown", "linear", "evolutionary", "self-improving", "tree-search"]:
+    return _run_system_kinds_many(conn, {run_id: kinds_seen or []}).get(run_id, "unknown")
+
+
+def _placeholders(count: int) -> str:
+    return ", ".join("?" for _ in range(count))
+
+
+def _payload_capabilities(payload: dict[str, Any]) -> dict[str, bool]:
+    raw = payload.get("capabilities")
+    if not isinstance(raw, dict):
+        return {}
+    return {str(key): value for key, value in raw.items() if isinstance(value, bool)}
+
+
+def _run_explicit_capabilities(conn: DuckConn, run_id: str) -> dict[str, bool]:
+    capabilities: dict[str, bool] = {}
+    conn.execute(
+        """
+        SELECT payload
+          FROM events
+         WHERE run_id = ? AND event_kind = 'run_start'
+         ORDER BY timestamp_ns ASC, event_id ASC
+         LIMIT 1;
+        """,
+        [run_id],
+    )
+    start_row = conn.fetchone()
+    if start_row is not None:
+        capabilities.update(_payload_capabilities(_json_payload_to_dict(start_row[0])))
+
+    conn.execute(
+        """
+        SELECT payload
+          FROM events
+         WHERE run_id = ? AND event_kind = 'run_update'
+         ORDER BY timestamp_ns DESC, event_id DESC
+         LIMIT 1;
+        """,
+        [run_id],
+    )
+    update_row = conn.fetchone()
+    if update_row is not None:
+        capabilities.update(_payload_capabilities(_json_payload_to_dict(update_row[0])))
+    return capabilities
+
+
+def _run_inferred_capabilities(conn: DuckConn, run_id: str) -> dict[str, bool]:
+    return _run_inferred_capabilities_many(conn, [run_id]).get(run_id, {})
+
+
+def _run_inferred_capabilities_many(
+    conn: DuckConn,
+    run_ids: list[str],
+) -> dict[str, dict[str, bool]]:
+    if not run_ids:
+        return {}
+    placeholders = _placeholders(len(run_ids))
+    sql = f"""
+        SELECT run_id,
+               SUM(
+                   CASE
+                       WHEN event_kind = 'operator'
+                        AND (
+                            json_extract_string(payload, '$.cost_usd') IS NOT NULL
+                         OR json_extract_string(payload, '$.tokens_in') IS NOT NULL
+                         OR json_extract_string(payload, '$.tokens_out') IS NOT NULL
+                        )
+                       THEN 1 ELSE 0
+                   END
+               ) AS llm_usage_count,
+               SUM(
+                   CASE
+                       WHEN event_kind = 'stream_event'
+                        AND (
+                            json_extract_string(payload, '$.label') IN (
+                                'cvevolve_message',
+                                'cvevolve_tool_call'
+                            )
+                         OR json_extract_string(payload, '$.metadata.audit_kind') IS NOT NULL
+                        )
+                       THEN 1 ELSE 0
+                   END
+               ) AS audit_count
+          FROM events
+         WHERE run_id IN ({placeholders})
+         GROUP BY run_id;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(sql, run_ids)
+    out: dict[str, dict[str, bool]] = {}
+    for run_id, llm_usage_count, audit_count in conn.fetchall():
+        inferred: dict[str, bool] = {}
+        if int(llm_usage_count or 0) > 0:
+            inferred["llm_usage"] = True
+        if int(audit_count or 0) > 0:
+            inferred["audit"] = True
+        out[str(run_id)] = inferred
+    return out
+
+
+def _run_capabilities(conn: DuckConn, run_id: str) -> dict[str, bool]:
+    return _run_capabilities_many(conn, [run_id]).get(run_id, {})
+
+
+def _run_explicit_capabilities_many(
+    conn: DuckConn,
+    run_ids: list[str],
+) -> dict[str, dict[str, bool]]:
+    if not run_ids:
+        return {}
+    out: dict[str, dict[str, bool]] = {run_id: {} for run_id in run_ids}
+    placeholders = _placeholders(len(run_ids))
+
+    start_sql = f"""
+        SELECT run_id, payload
+          FROM (
+              SELECT run_id,
+                     payload,
+                     ROW_NUMBER() OVER (
+                         PARTITION BY run_id
+                         ORDER BY timestamp_ns ASC, event_id ASC
+                     ) AS rn
+                FROM events
+               WHERE event_kind = 'run_start'
+                 AND run_id IN ({placeholders})
+          )
+         WHERE rn = 1;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(start_sql, run_ids)
+    for row_run_id, payload_raw in conn.fetchall():
+        out.setdefault(str(row_run_id), {}).update(
+            _payload_capabilities(_json_payload_to_dict(payload_raw))
+        )
+
+    update_sql = f"""
+        SELECT run_id, payload
+          FROM (
+              SELECT run_id,
+                     payload,
+                     ROW_NUMBER() OVER (
+                         PARTITION BY run_id
+                         ORDER BY timestamp_ns DESC, event_id DESC
+                     ) AS rn
+                FROM events
+               WHERE event_kind = 'run_update'
+                 AND run_id IN ({placeholders})
+          )
+         WHERE rn = 1;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(update_sql, run_ids)
+    for row_run_id, payload_raw in conn.fetchall():
+        out.setdefault(str(row_run_id), {}).update(
+            _payload_capabilities(_json_payload_to_dict(payload_raw))
+        )
+    return out
+
+
+def _run_capabilities_many(conn: DuckConn, run_ids: list[str]) -> dict[str, dict[str, bool]]:
+    out = _run_explicit_capabilities_many(conn, run_ids)
+    inferred = _run_inferred_capabilities_many(conn, run_ids)
+    for run_id in run_ids:
+        capabilities = out.setdefault(run_id, {})
+        for key, value in inferred.get(run_id, {}).items():
+            capabilities.setdefault(key, value)
+    return out
+
+
+def _run_system_kinds_many(
+    conn: DuckConn,
+    kinds_by_run: dict[str, list[str]],
+) -> dict[str, Literal["unknown", "linear", "evolutionary", "self-improving", "tree-search"]]:
+    out: dict[
+        str,
+        Literal["unknown", "linear", "evolutionary", "self-improving", "tree-search"],
+    ] = {}
+    unresolved: set[str] = set()
+    for run_id, kinds_seen in kinds_by_run.items():
+        kinds = set(kinds_seen or [])
+        if "self_mod" in kinds:
+            out[run_id] = "self-improving"
+        elif "tree_expansion" in kinds:
+            out[run_id] = "tree-search"
+        elif {"descriptor", "migration", "pareto_snapshot"} & kinds:
+            out[run_id] = "evolutionary"
+        else:
+            unresolved.add(run_id)
+
+    if not unresolved:
+        return out
+
+    unresolved_list = sorted(unresolved)
+    placeholders = _placeholders(len(unresolved_list))
+    adapter_sql = f"""
+        SELECT run_id, adapter
+          FROM (
+              SELECT run_id,
+                     json_extract_string(payload, '$.metadata.adapter') AS adapter,
+                     ROW_NUMBER() OVER (
+                         PARTITION BY run_id
+                         ORDER BY timestamp_ns ASC, event_id ASC
+                     ) AS rn
+                FROM events
+               WHERE event_kind = 'run_start'
+                 AND run_id IN ({placeholders})
+          )
+         WHERE rn = 1;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(adapter_sql, unresolved_list)
+    for run_id, adapter in conn.fetchall():
+        if adapter == "cvevolve":
+            out[str(run_id)] = "evolutionary"
+            unresolved.discard(str(run_id))
+
+    if not unresolved:
+        return out
+
+    unresolved_list = sorted(unresolved)
+    placeholders = _placeholders(len(unresolved_list))
+    operators_sql = f"""
+        SELECT run_id, LIST(DISTINCT json_extract_string(payload, '$.kind'))
+          FROM events
+         WHERE event_kind = 'operator'
+           AND run_id IN ({placeholders})
+         GROUP BY run_id;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(operators_sql, unresolved_list)
+    op_kinds_by_run: dict[str, set[str]] = {}
+    for run_id, values in conn.fetchall():
+        op_kinds_by_run[str(run_id)] = {
+            str(value) for value in (values or []) if isinstance(value, str) and value
+        }
+
+    individuals_sql = f"""
+        SELECT run_id,
+               COUNT(*),
+               SUM(
+                   CASE WHEN json_extract_string(payload, '$.is_seed') = 'true'
+                        THEN 1 ELSE 0 END
+               ),
+               SUM(
+                   CASE
+                       WHEN COALESCE(json_array_length(payload, '$.parent_ids'), 0) > 0
+                       THEN 1 ELSE 0
+                   END
+               ),
+               COUNT(DISTINCT NULLIF(json_extract_string(payload, '$.island_id'), ''))
+          FROM events
+         WHERE event_kind = 'individual'
+           AND run_id IN ({placeholders})
+         GROUP BY run_id;
+        """  # noqa: S608 - placeholder string is generated from trusted run-id count.
+    conn.execute(individuals_sql, unresolved_list)
+    individual_stats: dict[str, tuple[int, int, int, int]] = {}
+    for run_id, individual_count, seed_count, parented_count, island_count in conn.fetchall():
+        individual_stats[str(run_id)] = (
+            int(individual_count or 0),
+            int(seed_count or 0),
+            int(parented_count or 0),
+            int(island_count or 0),
+        )
+
+    for run_id in unresolved:
+        op_kinds = op_kinds_by_run.get(run_id, set())
+        individual_count, seed_count, parented_count, island_count = individual_stats.get(
+            run_id,
+            (0, 0, 0, 0),
+        )
+        if "self_modify" in op_kinds:
+            out[run_id] = "self-improving"
+        elif "tree_expand" in op_kinds:
+            out[run_id] = "tree-search"
+        elif op_kinds & {"mutate", "crossover", "migrate", "diversify", "select", "meta_mutate"}:
+            out[run_id] = "evolutionary"
+        elif island_count >= 2 or seed_count >= 2:
+            out[run_id] = "evolutionary"
+        elif not op_kinds and parented_count == 0:
+            out[run_id] = "unknown"
+        elif individual_count == 0 and not op_kinds:
+            out[run_id] = "unknown"
+        else:
+            out[run_id] = "linear"
+    return out
+
+
+def _run_status(conn: DuckConn, run_id: str) -> str | None:
+    conn.execute(
+        """
+        SELECT payload
+          FROM events
+         WHERE run_id = ? AND event_kind = 'run_end'
+         ORDER BY timestamp_ns DESC, event_id DESC
+         LIMIT 1;
+        """,
+        [run_id],
+    )
+    end_row = conn.fetchone()
+    if end_row is not None:
+        payload = _json_payload_to_dict(end_row[0])
+        status_raw = payload.get("status")
+        if isinstance(status_raw, str) and status_raw:
+            return status_raw
+
+    conn.execute(
+        """
+        SELECT payload
+          FROM events
+         WHERE run_id = ? AND event_kind = 'run_update'
+         ORDER BY timestamp_ns DESC, event_id DESC
+         LIMIT 1;
+        """,
+        [run_id],
+    )
+    update_row = conn.fetchone()
+    if update_row is not None:
+        payload = _json_payload_to_dict(update_row[0])
+        status_raw = payload.get("status")
+        if isinstance(status_raw, str) and status_raw:
+            return status_raw
+
+    conn.execute("SELECT COUNT(*) FROM events WHERE run_id = ?;", [run_id])
+    count_row = conn.fetchone()
+    if count_row is None or int(count_row[0]) == 0:
+        return None
+    return "running"
+
+
+def _run_exists(conn: DuckConn, run_id: str) -> bool:
+    conn.execute("SELECT COUNT(*) FROM events WHERE run_id = ?;", [run_id])
+    row = conn.fetchone()
+    return row is not None and int(row[0]) > 0
+
+
+def _event_row_to_json(row: tuple[Any, ...]) -> dict[str, Any]:
+    (
+        event_id,
+        event_kind,
+        run_id,
+        timestamp_ns,
+        stream_id,
+        worker_id,
+        span_id,
+        trace_id,
+        payload,
+    ) = row
+    payload_obj = json.loads(payload) if isinstance(payload, str) else payload
+    event = EVENT_ADAPTER.validate_python(
+        {
+            "event_id": str(event_id),
+            "event_kind": event_kind,
+            "run_id": run_id,
+            "timestamp_ns": int(timestamp_ns),
+            "stream_id": stream_id,
+            "worker_id": worker_id,
+            "span_id": span_id,
+            "trace_id": trace_id,
+            "payload": payload_obj,
+        }
+    )
+    return cast(dict[str, Any], json.loads(event.model_dump_json()))
 
 
 # ---------- app construction ------------------------------------------------
@@ -337,11 +726,8 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
 
     @app.get("/runs", response_model=list[RunSummary])
     async def list_runs(conn: DuckConn = Depends(_get_conn)) -> list[RunSummary]:
-        # Pull name/project from the run_start payload and status from
-        # run_end so the UI's run-list table is scannable. We use
-        # ANY_VALUE rather than MIN/MAX since string ordering on JSON
-        # values is meaningless; a run only has one run_start so picking
-        # any of them is fine.
+        # Pull immutable run identity from run_start, mutable live status
+        # from the newest run_update, and terminal status from run_end.
         conn.execute(
             """
             WITH per_run AS (
@@ -354,20 +740,63 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
                         FILTER (WHERE event_kind = 'run_start') AS name,
                     ANY_VALUE(json_extract_string(payload, '$.project'))
                         FILTER (WHERE event_kind = 'run_start') AS project,
-                    ANY_VALUE(json_extract_string(payload, '$.status'))
-                        FILTER (WHERE event_kind = 'run_end')   AS status,
                     LIST(DISTINCT event_kind) AS kinds_seen
                 FROM events
                 GROUP BY run_id
+            ),
+            latest_update AS (
+                SELECT run_id, status
+                FROM (
+                    SELECT
+                        run_id,
+                        json_extract_string(payload, '$.status') AS status,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY run_id
+                            ORDER BY timestamp_ns DESC, event_id DESC
+                        ) AS rn
+                    FROM events
+                    WHERE event_kind = 'run_update'
+                )
+                WHERE rn = 1
+            ),
+            latest_end AS (
+                SELECT run_id, status
+                FROM (
+                    SELECT
+                        run_id,
+                        json_extract_string(payload, '$.status') AS status,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY run_id
+                            ORDER BY timestamp_ns DESC, event_id DESC
+                        ) AS rn
+                    FROM events
+                    WHERE event_kind = 'run_end'
+                )
+                WHERE rn = 1
             )
             SELECT run_id, event_count, started_at_ns, ended_at_ns,
-                   name, project, status, kinds_seen
+                   name, project,
+                   COALESCE(
+                       latest_end.status,
+                       latest_update.status,
+                       CASE WHEN ended_at_ns IS NULL THEN 'running' ELSE NULL END
+                   ) AS status,
+                   kinds_seen
               FROM per_run
+              LEFT JOIN latest_update USING (run_id)
+              LEFT JOIN latest_end USING (run_id)
              ORDER BY COALESCE(started_at_ns, 0) DESC;
             """
         )
         rows = conn.fetchall()
         out: list[RunSummary] = []
+        if not rows:
+            return out
+        run_ids = [str(row[0]) for row in rows]
+        kinds_by_run = {str(row[0]): sorted(row[7]) if row[7] else [] for row in rows}
+        capabilities_by_run = _run_capabilities_many(conn, run_ids)
+        system_kinds_by_run = _run_system_kinds_many(conn, kinds_by_run)
+
         for (
             run_id,
             event_count,
@@ -378,16 +807,20 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
             status_v,
             kinds_seen,
         ) in rows:
+            run_id_str = str(run_id)
+            kinds = sorted(kinds_seen) if kinds_seen else []
             out.append(
                 RunSummary(
-                    run_id=run_id,
+                    run_id=run_id_str,
                     name=name if isinstance(name, str) and name else None,
                     project=project if isinstance(project, str) and project else None,
                     started_at_ns=int(started) if started is not None else None,
                     ended_at_ns=int(ended) if ended is not None else None,
                     status=status_v if isinstance(status_v, str) and status_v else None,
                     event_count=int(event_count),
-                    kinds_seen=sorted(kinds_seen) if kinds_seen else [],
+                    kinds_seen=kinds,
+                    capabilities=capabilities_by_run.get(run_id_str, {}),
+                    system_kind=system_kinds_by_run.get(run_id_str, "unknown"),
                 )
             )
         return out
@@ -410,9 +843,11 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
 
         event_count, first_ts, last_ts, kinds_seen = row
-        # Surface the run-level score_directions so the UI can apply
+        capabilities = _run_capabilities(conn, run_id)
+        # Surface the merged run-level score_directions so the UI can apply
         # canonical optimisation direction without re-fetching all events.
         score_directions: dict[str, str] = {}
+        run_status: str | None = None
         conn.execute(
             """
             SELECT payload
@@ -425,20 +860,60 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
         )
         payload_row = conn.fetchone()
         if payload_row is not None:
-            payload = (
-                json.loads(payload_row[0]) if isinstance(payload_row[0], str) else payload_row[0]
-            )
-            if isinstance(payload, dict):
-                raw = payload.get("score_directions")
-                if isinstance(raw, dict):
-                    score_directions = {str(k): str(v) for k, v in raw.items()}
+            payload = _json_payload_to_dict(payload_row[0])
+            raw = payload.get("score_directions")
+            if isinstance(raw, dict):
+                score_directions = {str(k): str(v) for k, v in raw.items()}
+
+        conn.execute(
+            """
+            SELECT payload
+              FROM events
+             WHERE run_id = ? AND event_kind = 'run_update'
+             ORDER BY timestamp_ns DESC, event_id DESC
+             LIMIT 1;
+            """,
+            [run_id],
+        )
+        update_row = conn.fetchone()
+        if update_row is not None:
+            payload = _json_payload_to_dict(update_row[0])
+            raw = payload.get("score_directions")
+            if isinstance(raw, dict):
+                score_directions.update({str(k): str(v) for k, v in raw.items()})
+            status_raw = payload.get("status")
+            if isinstance(status_raw, str) and status_raw:
+                run_status = status_raw
+
+        conn.execute(
+            """
+            SELECT payload
+              FROM events
+             WHERE run_id = ? AND event_kind = 'run_end'
+             ORDER BY timestamp_ns DESC, event_id DESC
+             LIMIT 1;
+            """,
+            [run_id],
+        )
+        end_row = conn.fetchone()
+        if end_row is not None:
+            payload = _json_payload_to_dict(end_row[0])
+            status_raw = payload.get("status")
+            if isinstance(status_raw, str) and status_raw:
+                run_status = status_raw
+        elif run_status is None:
+            run_status = "running"
+
         return {
             "run_id": run_id,
             "event_count": int(event_count),
             "kinds_seen": sorted(kinds_seen) if kinds_seen else [],
             "first_timestamp_ns": int(first_ts),
             "last_timestamp_ns": int(last_ts),
+            "status": run_status,
             "score_directions": score_directions,
+            "capabilities": capabilities,
+            "system_kind": _run_system_kind(conn, run_id, sorted(kinds_seen) if kinds_seen else []),
         }
 
     @app.get("/runs/{run_id}/events")
@@ -459,6 +934,60 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
         if not events and event_kind is None and since_timestamp_ns is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
         return [json.loads(e.model_dump_json()) for e in events]
+
+    @app.get("/runs/{run_id}/stream_events", response_model=StreamEventsResponse)
+    async def get_stream_events(
+        run_id: str,
+        conn: DuckConn = Depends(_get_conn),
+        label: str | None = None,
+        query: str | None = None,
+        offset: int = Query(default=0, ge=0),
+        limit: int = Query(default=200, ge=1, le=2_000),
+    ) -> StreamEventsResponse:
+        if not _run_exists(conn, run_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
+
+        where_parts = ["run_id = ?", "event_kind = 'stream_event'"]
+        params: list[object] = [run_id]
+        if label:
+            where_parts.append("json_extract_string(payload, '$.label') = ?")
+            params.append(label)
+        if query:
+            like = f"%{query.lower()}%"
+            where_parts.append(
+                """
+                (
+                    LOWER(COALESCE(json_extract_string(payload, '$.label'), '')) LIKE ?
+                 OR LOWER(COALESCE(json_extract_string(payload, '$.text'), '')) LIKE ?
+                 OR LOWER(CAST(payload AS VARCHAR)) LIKE ?
+                )
+                """
+            )
+            params.extend([like, like, like])
+        where_sql = " AND ".join(where_parts)
+
+        conn.execute(f"SELECT COUNT(*) FROM events WHERE {where_sql};", params)  # noqa: S608
+        row = conn.fetchone()
+        total = int(row[0] or 0) if row is not None else 0
+
+        conn.execute(
+            f"""
+            SELECT event_id, event_kind, run_id, timestamp_ns,
+                   stream_id, worker_id, span_id, trace_id, payload
+              FROM events
+             WHERE {where_sql}
+             ORDER BY timestamp_ns ASC, event_id ASC
+             LIMIT ? OFFSET ?;
+            """,  # noqa: S608
+            [*params, limit, offset],
+        )
+        rows = conn.fetchall()
+        return StreamEventsResponse(
+            events=[_event_row_to_json(row) for row in rows],
+            total=total,
+            offset=offset,
+            limit=limit,
+        )
 
     @app.get("/runs/{run_id}/individuals")
     async def get_individuals(
@@ -675,6 +1204,53 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
             return
         await broadcaster.publish(run_id, event.model_dump_json())
 
+    def _persisted_steering_history(conn: DuckConn, run_id: str) -> list[dict[str, Any]]:
+        events = read_events(conn, run_id, event_kind="steering_command", limit=50_000)
+        by_command: dict[str, dict[str, Any]] = {}
+        for event in events:
+            if not isinstance(event, SteeringCommandEvent):
+                continue
+            payload = event.payload
+            metadata = dict(getattr(payload, "metadata", {}) or {})
+            command_id = metadata.get("command_id")
+            if not isinstance(command_id, str) or not command_id:
+                command_id = str(event.event_id)
+            record = by_command.setdefault(
+                command_id,
+                {
+                    "command_id": command_id,
+                    "run_id": run_id,
+                    "command": payload.command,
+                    "target_id": payload.target_id,
+                    "params": dict(payload.params),
+                    "actor": payload.actor,
+                    "created_at_ns": event.timestamp_ns,
+                    "status": "pending",
+                    "delivered_at_ns": None,
+                    "acked_at_ns": None,
+                    "outcome": None,
+                    "outcome_note": None,
+                },
+            )
+            record["command"] = payload.command
+            record["target_id"] = payload.target_id
+            record["params"] = dict(payload.params)
+            record["actor"] = payload.actor
+            status_raw = metadata.get("status")
+            if isinstance(status_raw, str) and status_raw:
+                record["status"] = status_raw
+                if status_raw == "delivered":
+                    record["delivered_at_ns"] = event.timestamp_ns
+                if status_raw == "acked":
+                    record["acked_at_ns"] = event.timestamp_ns
+            outcome = metadata.get("outcome")
+            if isinstance(outcome, str) and outcome:
+                record["outcome"] = outcome
+            outcome_note = metadata.get("outcome_note")
+            if isinstance(outcome_note, str) and outcome_note:
+                record["outcome_note"] = outcome_note
+        return sorted(by_command.values(), key=lambda item: int(item["created_at_ns"]))
+
     @app.post("/steering/{run_id}")
     async def issue_steering_command(
         run_id: str,
@@ -684,6 +1260,20 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
         write_lock: asyncio.Lock = Depends(_get_db_write_lock),
         broadcaster: RunBroadcaster = Depends(_get_broadcaster),
     ) -> dict[str, Any]:
+        if not _run_exists(conn, run_id):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="run not found")
+        run_status = _run_status(conn, run_id)
+        if run_status in {"finished", "failed", "cancelled"}:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"run is terminal ({run_status}); steering is read-only",
+            )
+        capabilities = _run_explicit_capabilities(conn, run_id)
+        if capabilities.get("steering") is not True:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="run does not advertise steering capability",
+            )
         record = await store.issue(
             run_id=run_id,
             command=body.command,
@@ -706,9 +1296,15 @@ def create_app(*, db_path: Path | str | None = None, auth_token: str | None = No
     async def list_steering_commands(
         run_id: str,
         store: SteeringStore = Depends(_get_steering),
+        conn: DuckConn = Depends(_get_conn),
     ) -> list[dict[str, Any]]:
+        persisted_history = _persisted_steering_history(conn, run_id)
+        records_by_id = {str(record["command_id"]): record for record in persisted_history}
         history = await store.list_history(run_id)
-        return [r.to_dict() for r in history]
+        for record in history:
+            payload = record.to_dict()
+            records_by_id[str(payload["command_id"])] = payload
+        return sorted(records_by_id.values(), key=lambda item: int(item["created_at_ns"]))
 
     @app.post("/steering/{run_id}/{command_id}/ack")
     async def ack_steering_command(

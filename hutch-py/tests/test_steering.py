@@ -7,11 +7,24 @@ from fastapi.testclient import TestClient
 from hutch.daemon.app import create_app
 
 
+def _start_steerable_run(client: TestClient, run_id: str) -> None:
+    response = client.post(
+        "/events",
+        json={
+            "run_id": run_id,
+            "event_kind": "run_start",
+            "payload": {"capabilities": {"steering": True}},
+        },
+    )
+    assert response.status_code == 200, response.text
+
+
 def test_issue_poll_ack_roundtrip() -> None:
     """End-to-end: POST /steering, GET poll, POST ack — and the in-memory
     queue lines up with the persisted ``steering_command`` events."""
     with TestClient(create_app()) as client:
         run = "r-steering-1"
+        _start_steerable_run(client, run)
 
         issue = client.post(
             f"/steering/{run}",
@@ -68,6 +81,7 @@ def test_issue_poll_ack_roundtrip() -> None:
 def test_ack_unknown_command_returns_404() -> None:
     with TestClient(create_app()) as client:
         run = "r-steering-2"
+        _start_steerable_run(client, run)
         # Issue + poll something so the queue is initialized.
         client.post(f"/steering/{run}", json={"command": "pause_run", "actor": "human"})
         client.get(f"/steering/{run}/poll")
@@ -90,6 +104,7 @@ def test_multiple_commands_preserve_order() -> None:
     """Order of polled commands matches order of issuance (FIFO)."""
     with TestClient(create_app()) as client:
         run = "r-steering-3"
+        _start_steerable_run(client, run)
         for cmd in ("pause_run", "resume_run", "inject_hint"):
             r = client.post(f"/steering/{run}", json={"command": cmd, "actor": "human"})
             assert r.status_code == 200

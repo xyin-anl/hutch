@@ -58,7 +58,7 @@ def configured_sdk(
 
 def test_send_and_poll_dispatches_handler(configured_sdk: None) -> None:
     """Decorated handler is invoked + auto-acked by ``poll()``."""
-    run = h.start_run(name="steering-sdk-test")
+    run = h.start_run(name="steering-sdk-test", capabilities={"steering": True})
     try:
         called: list[str] = []
 
@@ -79,7 +79,7 @@ def test_send_and_poll_dispatches_handler(configured_sdk: None) -> None:
 
 def test_unhandled_command_is_auto_rejected(configured_sdk: None) -> None:
     """A command without a registered handler is acked with outcome=rejected."""
-    run = h.start_run(name="steering-sdk-unhandled")
+    run = h.start_run(name="steering-sdk-unhandled", capabilities={"steering": True})
     try:
         record = steering.send(command="cancel_individual", target_id="ind-x", run_id=run.id)
         cmd_id = record["command_id"]
@@ -96,7 +96,7 @@ def test_unhandled_command_is_auto_rejected(configured_sdk: None) -> None:
 
 
 def test_poll_handles_multiple_commands_in_order(configured_sdk: None) -> None:
-    run = h.start_run(name="steering-sdk-order")
+    run = h.start_run(name="steering-sdk-order", capabilities={"steering": True})
     try:
         seen: list[str] = []
 

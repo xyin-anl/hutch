@@ -119,6 +119,50 @@ def test_get_run_surfaces_score_directions(daemon_client: TestClient) -> None:
     assert detail["score_directions"] == {"accuracy": "higher", "compile_ms": "lower"}
 
 
+def test_run_update_overrides_score_directions_and_marks_running(
+    daemon_client: TestClient,
+) -> None:
+    daemon_client.post(
+        "/events",
+        json={
+            "run_id": "r-live-sd",
+            "timestamp_ns": 1,
+            "event_kind": "run_start",
+            "payload": {"name": "live", "score_directions": {"loss": "higher"}},
+        },
+    )
+    daemon_client.post(
+        "/events",
+        json={
+            "run_id": "r-live-sd",
+            "timestamp_ns": 2,
+            "event_kind": "run_update",
+            "payload": {"status": "running", "score_directions": {"loss": "lower"}},
+        },
+    )
+
+    detail = daemon_client.get("/runs/r-live-sd").json()
+    assert detail["status"] == "running"
+    assert detail["score_directions"] == {"loss": "lower"}
+
+    runs = daemon_client.get("/runs").json()
+    summary = next(run for run in runs if run["run_id"] == "r-live-sd")
+    assert summary["status"] == "running"
+
+    daemon_client.post(
+        "/events",
+        json={
+            "run_id": "r-live-sd",
+            "timestamp_ns": 3,
+            "event_kind": "run_end",
+            "payload": {"status": "finished"},
+        },
+    )
+    runs = daemon_client.get("/runs").json()
+    summary = next(run for run in runs if run["run_id"] == "r-live-sd")
+    assert summary["status"] == "finished"
+
+
 def test_get_run_returns_empty_score_directions_when_absent(
     daemon_client: TestClient,
 ) -> None:
