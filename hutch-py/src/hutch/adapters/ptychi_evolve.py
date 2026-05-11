@@ -82,6 +82,7 @@ def import_ptychi_evolve(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for a ptychi-evolve dump at *path*."""
     root = Path(path)
@@ -181,18 +182,19 @@ def import_ptychi_evolve(
                     ),
                 )
 
-    last_ts = _latest_ts(rounds) or (started_at + len(rounds) + 1)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=(
-                f"imported {total_individuals} ptychi-evolve individuals "
-                f"across {len(rounds)} rounds"
+    if finalize:
+        last_ts = _latest_ts(rounds) or (started_at + len(rounds) + 1)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=(
+                    f"imported {total_individuals} ptychi-evolve individuals "
+                    f"across {len(rounds)} rounds"
+                ),
             ),
-        ),
-    )
+        )
 
 
 # ---------- helpers --------------------------------------------------------

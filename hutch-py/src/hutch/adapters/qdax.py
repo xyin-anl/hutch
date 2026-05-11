@@ -89,6 +89,7 @@ def import_qdax(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events from a QDax JSON repertoire export at *path*.
 
@@ -236,17 +237,18 @@ def import_qdax(
         ),
     )
 
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=started_at + len(fitnesses) + 2,
-        payload=RunEndPayload(
-            status="finished",
-            summary=(
-                f"imported {filled} filled cells of {len(fitnesses)} "
-                f"(coverage={coverage:.2%}) from {p.name}"
+    if finalize:
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=started_at + len(fitnesses) + 2,
+            payload=RunEndPayload(
+                status="finished",
+                summary=(
+                    f"imported {filled} filled cells of {len(fitnesses)} "
+                    f"(coverage={coverage:.2%}) from {p.name}"
+                ),
             ),
-        ),
-    )
+        )
 
 
 # ---------- helpers --------------------------------------------------------

@@ -73,6 +73,7 @@ def import_aide(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for an AIDE journal."""
     root = Path(path)
@@ -177,15 +178,16 @@ def import_aide(
                 payload=payload,
             )
 
-    last_ts = _latest_ctime_ns(nodes)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=f"imported {len(nodes)} nodes from {journal_path.name}",
-        ),
-    )
+    if finalize:
+        last_ts = _latest_ctime_ns(nodes)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=f"imported {len(nodes)} nodes from {journal_path.name}",
+            ),
+        )
 
 
 # ---------- helpers --------------------------------------------------------

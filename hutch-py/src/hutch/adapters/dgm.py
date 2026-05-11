@@ -69,6 +69,7 @@ def import_dgm(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for the DGM run at *path*."""
     root = Path(path)
@@ -174,15 +175,16 @@ def import_dgm(
             )
         parent_score[agent_id] = score
 
-    last_ts = _latest_ctime_ns(agents)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=f"imported {len(agents)} agents from {root.name}",
-        ),
-    )
+    if finalize:
+        last_ts = _latest_ctime_ns(agents)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=f"imported {len(agents)} agents from {root.name}",
+            ),
+        )
 
 
 # ---------- helpers --------------------------------------------------------

@@ -68,6 +68,7 @@ def import_openevolve(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for the OpenEvolve checkpoint at *path*."""
     root = Path(path)
@@ -195,15 +196,16 @@ def import_openevolve(
             )
 
     # ----- run_end ---------------------------------------------------------
-    last_ts = _latest_timestamp_ns(programs)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=f"imported {len(programs)} programs from {root.name}",
-        ),
-    )
+    if finalize:
+        last_ts = _latest_timestamp_ns(programs)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=f"imported {len(programs)} programs from {root.name}",
+            ),
+        )
 
 
 # ---------- helpers --------------------------------------------------------

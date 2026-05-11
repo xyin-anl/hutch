@@ -11,11 +11,13 @@ import logging
 from collections.abc import Callable, Iterator
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any, Literal
 
 from hutch.adapters import (
     aide,
     asi_arch,
     coral,
+    cvevolve,
     dgm,
     funsearch,
     openevolve,
@@ -24,9 +26,17 @@ from hutch.adapters import (
     qdax,
     shinka_evolve,
 )
+from hutch.adapters.support import decorate_adapter_events
 from hutch.schema import AnyEvent
 
 logger = logging.getLogger("hutch.adapters")
+
+CompletionPolicy = Literal["explicit", "idle"]
+
+
+def _unknown_complete(path: Path) -> bool | None:
+    del path
+    return None
 
 
 @dataclass(frozen=True, slots=True)
@@ -36,6 +46,27 @@ class Adapter:
     name: str
     detect: Callable[[Path], bool]
     importer: Callable[..., Iterator[AnyEvent]]
+    is_complete: Callable[[Path], bool | None] = _unknown_complete
+    completion_policy: CompletionPolicy = "idle"
+
+    def iter_events(
+        self,
+        path: str | Path,
+        *,
+        run_id: str | None = None,
+        project: str | None = None,
+        finalize: bool = True,
+        **importer_options: Any,
+    ) -> Iterator[AnyEvent]:
+        """Yield adapter events with stable ids and source metadata."""
+        events = self.importer(
+            path,
+            run_id=run_id,
+            project=project,
+            finalize=finalize,
+            **importer_options,
+        )
+        return decorate_adapter_events(events, adapter_name=self.name, source_path=path)
 
 
 REGISTRY: tuple[Adapter, ...] = (
@@ -47,6 +78,13 @@ REGISTRY: tuple[Adapter, ...] = (
     Adapter(name="funsearch", detect=funsearch.detect, importer=funsearch.import_funsearch),
     Adapter(name="coral", detect=coral.detect, importer=coral.import_coral),
     Adapter(name="poet", detect=poet.detect, importer=poet.import_poet),
+    Adapter(
+        name="cvevolve",
+        detect=cvevolve.detect,
+        importer=cvevolve.import_cvevolve,
+        is_complete=cvevolve.is_complete,
+        completion_policy="explicit",
+    ),
     Adapter(
         name="ptychi_evolve",
         detect=ptychi_evolve.detect,
@@ -75,9 +113,11 @@ def detect_format(path: Path) -> Adapter | None:
 __all__ = [
     "REGISTRY",
     "Adapter",
+    "CompletionPolicy",
     "aide",
     "asi_arch",
     "coral",
+    "cvevolve",
     "detect_format",
     "dgm",
     "funsearch",

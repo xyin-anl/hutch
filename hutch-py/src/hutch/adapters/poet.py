@@ -82,6 +82,7 @@ def import_poet(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for a POET dump at *path*."""
     root = Path(path)
@@ -233,18 +234,19 @@ def import_poet(
                 ),
             )
 
-    last_ts = _latest_ts(generations) or (started_at + len(generations) + 1)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=(
-                f"imported {len(generations)} POET generations: "
-                f"{len(seen_envs)} environments, {len(seen_agents)} agents"
+    if finalize:
+        last_ts = _latest_ts(generations) or (started_at + len(generations) + 1)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=(
+                    f"imported {len(generations)} POET generations: "
+                    f"{len(seen_envs)} environments, {len(seen_agents)} agents"
+                ),
             ),
-        ),
-    )
+        )
 
 
 # ---------- helpers --------------------------------------------------------

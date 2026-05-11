@@ -83,6 +83,7 @@ def import_funsearch(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for a FunSearch dump at *path*."""
     root = Path(path)
@@ -187,15 +188,16 @@ def import_funsearch(
                 ),
             )
 
-    last_ts = _latest_ts(records) or (started_at + len(records) + 1)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=f"imported {len(records)} FunSearch programs ({problem_name})",
-        ),
-    )
+    if finalize:
+        last_ts = _latest_ts(records) or (started_at + len(records) + 1)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=f"imported {len(records)} FunSearch programs ({problem_name})",
+            ),
+        )
 
 
 # ---------- helpers --------------------------------------------------------

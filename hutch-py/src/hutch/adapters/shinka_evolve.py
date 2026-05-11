@@ -99,6 +99,7 @@ def import_shinka_evolve(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for a ShinkaEvolve dump at *path*."""
     root = Path(path)
@@ -227,22 +228,23 @@ def import_shinka_evolve(
                 ),
             )
 
-    last_ts = max(
-        _latest_ts(candidates) or 0,
-        _latest_ts(meta_mutations) or 0,
-        started_at + len(candidates),
-    )
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=last_ts + 1,
-        payload=RunEndPayload(
-            status="finished",
-            summary=(
-                f"imported {len(candidates)} ShinkaEvolve candidates "
-                f"+ {len(meta_mutations)} meta-mutations"
+    if finalize:
+        last_ts = max(
+            _latest_ts(candidates) or 0,
+            _latest_ts(meta_mutations) or 0,
+            started_at + len(candidates),
+        )
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=last_ts + 1,
+            payload=RunEndPayload(
+                status="finished",
+                summary=(
+                    f"imported {len(candidates)} ShinkaEvolve candidates "
+                    f"+ {len(meta_mutations)} meta-mutations"
+                ),
             ),
-        ),
-    )
+        )
 
 
 # ---------- helpers --------------------------------------------------------

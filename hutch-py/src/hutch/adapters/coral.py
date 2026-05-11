@@ -137,6 +137,7 @@ def import_coral(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for a CORAL dump at *path*."""
     root = Path(path)
@@ -288,23 +289,24 @@ def import_coral(
             ),
         )
 
-    last_ts = max(
-        _latest_ts(iterations) or 0,
-        _latest_ts(heartbeats) or 0,
-        _latest_ts(snapshots) or 0,
-        started_at + len(iterations),
-    )
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=last_ts + 1,
-        payload=RunEndPayload(
-            status="finished",
-            summary=(
-                f"imported {len(iterations)} CORAL iterations, "
-                f"{len(heartbeats)} heartbeats, {len(snapshots)} memory snapshots"
+    if finalize:
+        last_ts = max(
+            _latest_ts(iterations) or 0,
+            _latest_ts(heartbeats) or 0,
+            _latest_ts(snapshots) or 0,
+            started_at + len(iterations),
+        )
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=last_ts + 1,
+            payload=RunEndPayload(
+                status="finished",
+                summary=(
+                    f"imported {len(iterations)} CORAL iterations, "
+                    f"{len(heartbeats)} heartbeats, {len(snapshots)} memory snapshots"
+                ),
             ),
-        ),
-    )
+        )
 
 
 # ---------- helpers --------------------------------------------------------

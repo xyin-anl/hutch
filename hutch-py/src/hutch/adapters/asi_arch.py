@@ -95,6 +95,7 @@ def import_asi_arch(
     *,
     run_id: str | None = None,
     project: str | None = None,
+    finalize: bool = True,
 ) -> Iterator[AnyEvent]:
     """Yield canonical events for an ASI-ARCH experiment dump at *path*."""
     p = Path(path)
@@ -216,15 +217,16 @@ def import_asi_arch(
                 ),
             )
 
-    last_ts = _latest_ts(records) or (started_at + len(records) + 1)
-    yield RunEndEvent(
-        run_id=resolved_run_id,
-        timestamp_ns=max(last_ts, started_at + 1),
-        payload=RunEndPayload(
-            status="finished",
-            summary=f"imported {len(records)} ASI-ARCH experiments",
-        ),
-    )
+    if finalize:
+        last_ts = _latest_ts(records) or (started_at + len(records) + 1)
+        yield RunEndEvent(
+            run_id=resolved_run_id,
+            timestamp_ns=max(last_ts, started_at + 1),
+            payload=RunEndPayload(
+                status="finished",
+                summary=f"imported {len(records)} ASI-ARCH experiments",
+            ),
+        )
 
 
 # ---------- helpers --------------------------------------------------------
