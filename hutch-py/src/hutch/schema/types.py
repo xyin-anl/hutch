@@ -126,6 +126,7 @@ RunStatus = Literal["running", "finished", "failed", "cancelled"]
 
 EventKind = Literal[
     "run_start",
+    "run_update",
     "run_end",
     "individual",
     "operator",
@@ -148,6 +149,7 @@ EventKind = Literal[
 
 ALL_KINDS: tuple[str, ...] = (
     "run_start",
+    "run_update",
     "run_end",
     "individual",
     "operator",

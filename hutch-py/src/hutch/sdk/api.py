@@ -42,6 +42,8 @@ from hutch.schema import (
     RunEndPayload,
     RunStartEvent,
     RunStartPayload,
+    RunUpdateEvent,
+    RunUpdatePayload,
     SelfModEvent,
     SelfModPayload,
     StreamEventEvent,
@@ -81,6 +83,14 @@ def _send(event: AnyEvent) -> None:
     state().transport.send(event)
 
 
+def _event_kwargs(event_id: str | uuid.UUID | None) -> dict[str, uuid.UUID]:
+    if event_id is None:
+        return {}
+    if isinstance(event_id, uuid.UUID):
+        return {"event_id": event_id}
+    return {"event_id": uuid.UUID(str(event_id))}
+
+
 # ---------- run / population -------------------------------------------
 
 
@@ -92,7 +102,10 @@ def start_run(
     started_by: str | None = None,
     git_commit: str | None = None,
     config: dict[str, Any] | None = None,
+    capabilities: dict[str, bool] | None = None,
     score_directions: dict[str, ScoreDirection] | None = None,
+    metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> RunHandle:
     """Open a run and emit a ``run_start`` event.
 
@@ -115,13 +128,16 @@ def start_run(
     _send(
         RunStartEvent(
             run_id=handle.id,
+            **_event_kwargs(event_id),
             payload=RunStartPayload(
                 name=name,
                 project=project,
                 started_by=started_by,
                 git_commit=git_commit,
                 config=config or {},
+                capabilities=dict(capabilities or {}),
                 score_directions=dict(score_directions or {}),
+                metadata=metadata or {},
             ),
         )
     )
@@ -129,12 +145,50 @@ def start_run(
     return handle
 
 
-def end_run(*, status: RunStatus = "finished", summary: str | None = None) -> None:
+def log_run_update(
+    *,
+    status: RunStatus | None = None,
+    config: dict[str, Any] | None = None,
+    capabilities: dict[str, bool] | None = None,
+    score_directions: dict[str, ScoreDirection] | None = None,
+    source_counts: dict[str, int] | None = None,
+    watcher: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
+) -> RunUpdatePayload:
+    """Emit mutable run-level metadata for live producers."""
+    handle = active_run()
+    payload = RunUpdatePayload(
+        status=status,
+        config=config or {},
+        capabilities=dict(capabilities or {}),
+        score_directions=dict(score_directions or {}),
+        source_counts=dict(source_counts or {}),
+        watcher=watcher or {},
+        metadata=metadata or {},
+    )
+    _send(
+        RunUpdateEvent(
+            run_id=handle.id,
+            **_event_kwargs(event_id),
+            payload=payload,
+        )
+    )
+    return payload
+
+
+def end_run(
+    *,
+    status: RunStatus = "finished",
+    summary: str | None = None,
+    event_id: str | uuid.UUID | None = None,
+) -> None:
     """Emit a ``run_end`` event for the active run and clear the active state."""
     handle = active_run()
     _send(
         RunEndEvent(
             run_id=handle.id,
+            **_event_kwargs(event_id),
             payload=RunEndPayload(status=status, summary=summary),
         )
     )
@@ -183,6 +237,7 @@ def log_individual(
     metadata: dict[str, Any] | None = None,
     stream_id: str | None = None,
     worker_id: str | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> IndividualPayload:
     """Log one Individual. Returns the payload so callers can use ``ind.id``."""
     handle = active_run()
@@ -206,6 +261,7 @@ def log_individual(
             run_id=handle.id,
             stream_id=stream_id,
             worker_id=worker_id,
+            **_event_kwargs(event_id),
             payload=payload,
         )
     )
@@ -229,6 +285,7 @@ def log_operator(
     metadata: dict[str, Any] | None = None,
     stream_id: str | None = None,
     worker_id: str | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> OperatorPayload:
     handle = active_run()
     payload = OperatorPayload(
@@ -251,6 +308,7 @@ def log_operator(
             run_id=handle.id,
             stream_id=stream_id,
             worker_id=worker_id,
+            **_event_kwargs(event_id),
             payload=payload,
         )
     )
@@ -270,6 +328,7 @@ def log_fitness(
     invalid_reason: str | None = None,
     metadata: dict[str, Any] | None = None,
     stream_id: str | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> FitnessPayload:
     handle = active_run()
     individual_id = individual.id if isinstance(individual, IndividualPayload) else individual
@@ -285,7 +344,14 @@ def log_fitness(
         invalid_reason=invalid_reason,
         metadata=metadata or {},
     )
-    _send(FitnessEvent(run_id=handle.id, stream_id=stream_id, payload=payload))
+    _send(
+        FitnessEvent(
+            run_id=handle.id,
+            stream_id=stream_id,
+            **_event_kwargs(event_id),
+            payload=payload,
+        )
+    )
     return payload
 
 
@@ -299,6 +365,7 @@ def log_descriptor(
     dimensions: list[str] | None = None,
     is_replaced: bool = False,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> DescriptorPayload:
     handle = active_run()
     individual_id = individual.id if isinstance(individual, IndividualPayload) else individual
@@ -312,7 +379,7 @@ def log_descriptor(
         is_replaced=is_replaced,
         metadata=metadata or {},
     )
-    _send(DescriptorEvent(run_id=handle.id, payload=payload))
+    _send(DescriptorEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -325,6 +392,7 @@ def log_archive_snapshot(
     max_fitness: float | None = None,
     snapshot_uri: str | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> ArchiveSnapshotPayload:
     handle = active_run()
     payload = ArchiveSnapshotPayload(
@@ -336,7 +404,7 @@ def log_archive_snapshot(
         snapshot_uri=snapshot_uri,
         metadata=metadata or {},
     )
-    _send(ArchiveSnapshotEvent(run_id=handle.id, payload=payload))
+    _send(ArchiveSnapshotEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -348,6 +416,7 @@ def log_island_migration(
     individual_ids: list[str],
     trigger: str | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> MigrationPayload:
     handle = active_run()
     payload = MigrationPayload(
@@ -358,7 +427,7 @@ def log_island_migration(
         trigger=trigger,
         metadata=metadata or {},
     )
-    _send(MigrationEvent(run_id=handle.id, payload=payload))
+    _send(MigrationEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -375,6 +444,7 @@ def log_self_modification(
     score_before: float | None = None,
     score_after: float | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> SelfModPayload:
     handle = active_run()
     payload = SelfModPayload(
@@ -390,7 +460,7 @@ def log_self_modification(
         score_after=score_after,
         metadata=metadata or {},
     )
-    _send(SelfModEvent(run_id=handle.id, payload=payload))
+    _send(SelfModEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -404,6 +474,7 @@ def log_artifact(
     parent_artifact_id: str | None = None,
     ara_layer: str | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> ArtifactPayload:
     handle = active_run()
     payload = ArtifactPayload(
@@ -416,7 +487,7 @@ def log_artifact(
         ara_layer=ara_layer,
         metadata=metadata or {},
     )
-    _send(ArtifactEvent(run_id=handle.id, payload=payload))
+    _send(ArtifactEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -427,6 +498,7 @@ def log_pareto_front(
     objectives: list[str],
     hypervolume: float | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> ParetoSnapshotPayload:
     handle = active_run()
     population_id = population.id if isinstance(population, Population) else population
@@ -437,7 +509,7 @@ def log_pareto_front(
         hypervolume=hypervolume,
         metadata=metadata or {},
     )
-    _send(ParetoSnapshotEvent(run_id=handle.id, payload=payload))
+    _send(ParetoSnapshotEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -450,6 +522,7 @@ def log_tree_expansion(
     value_estimate: float | None = None,
     virtual_loss: float | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> TreeExpansionPayload:
     handle = active_run()
     payload = TreeExpansionPayload(
@@ -461,7 +534,7 @@ def log_tree_expansion(
         virtual_loss=virtual_loss,
         metadata=metadata or {},
     )
-    _send(TreeExpansionEvent(run_id=handle.id, payload=payload))
+    _send(TreeExpansionEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -472,6 +545,7 @@ def log_stream_event(
     stream_id: str | None = None,
     worker_id: str | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> StreamEventPayload:
     handle = active_run()
     payload = StreamEventPayload(label=label, text=text, metadata=metadata or {})
@@ -480,6 +554,7 @@ def log_stream_event(
             run_id=handle.id,
             stream_id=stream_id,
             worker_id=worker_id,
+            **_event_kwargs(event_id),
             payload=payload,
         )
     )
@@ -493,6 +568,7 @@ def log_claim(
     requires_reproduction: bool = False,
     claim_id: str | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> ClaimPayload:
     handle = active_run()
     payload = ClaimPayload(
@@ -502,7 +578,7 @@ def log_claim(
         requires_reproduction=requires_reproduction,
         metadata=metadata or {},
     )
-    _send(ClaimEvent(run_id=handle.id, payload=payload))
+    _send(ClaimEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -514,6 +590,7 @@ def log_evidence(
     confidence: float | None = None,
     source_quality: float | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> EvidencePayload:
     handle = active_run()
     payload = EvidencePayload(
@@ -524,7 +601,7 @@ def log_evidence(
         source_quality=source_quality,
         metadata=metadata or {},
     )
-    _send(EvidenceEvent(run_id=handle.id, payload=payload))
+    _send(EvidenceEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload
 
 
@@ -535,6 +612,7 @@ def log_review(
     scores: dict[str, float] | None = None,
     concerns: list[str] | None = None,
     metadata: dict[str, Any] | None = None,
+    event_id: str | uuid.UUID | None = None,
 ) -> ReviewPayload:
     handle = active_run()
     payload = ReviewPayload(
@@ -544,5 +622,5 @@ def log_review(
         concerns=list(concerns or []),
         metadata=metadata or {},
     )
-    _send(ReviewEvent(run_id=handle.id, payload=payload))
+    _send(ReviewEvent(run_id=handle.id, **_event_kwargs(event_id), payload=payload))
     return payload

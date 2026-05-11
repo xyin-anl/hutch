@@ -29,6 +29,7 @@ from hutch.schema.payloads import (
     ReviewPayload,
     RunEndPayload,
     RunStartPayload,
+    RunUpdatePayload,
     SelfModPayload,
     SteeringCommandPayload,
     StreamEventPayload,
@@ -59,6 +60,11 @@ class _EventEnvelope(BaseModel):
 class RunStartEvent(_EventEnvelope):
     event_kind: Literal["run_start"] = "run_start"
     payload: RunStartPayload
+
+
+class RunUpdateEvent(_EventEnvelope):
+    event_kind: Literal["run_update"] = "run_update"
+    payload: RunUpdatePayload
 
 
 class RunEndEvent(_EventEnvelope):
@@ -148,6 +154,7 @@ class ParetoSnapshotEvent(_EventEnvelope):
 
 AnyEvent = Annotated[
     RunStartEvent
+    | RunUpdateEvent
     | RunEndEvent
     | IndividualEvent
     | OperatorEvent
@@ -178,6 +185,7 @@ concrete subtype:
 
 EVENT_ADAPTER: TypeAdapter[
     RunStartEvent
+    | RunUpdateEvent
     | RunEndEvent
     | IndividualEvent
     | OperatorEvent
@@ -200,6 +208,7 @@ EVENT_ADAPTER: TypeAdapter[
 
 EVENT_CLASSES: tuple[type[_EventEnvelope], ...] = (
     RunStartEvent,
+    RunUpdateEvent,
     RunEndEvent,
     IndividualEvent,
     OperatorEvent,

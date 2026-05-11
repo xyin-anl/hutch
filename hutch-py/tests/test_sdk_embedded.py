@@ -16,7 +16,12 @@ def _embedded_config(tmp_path: Path) -> SDKConfig:
 
 def test_start_run_emits_run_start(tmp_path: Path) -> None:
     h.configure(_embedded_config(tmp_path))
-    run = h.start_run(name="test-run", project="hutch")
+    run = h.start_run(
+        name="test-run",
+        project="hutch",
+        capabilities={"steering": True, "llm_usage": False},
+        metadata={"adapter": "unit-test"},
+    )
     assert run.id.startswith("run-")
 
     conn = open_db(tmp_path / "hutch.duckdb")
@@ -25,6 +30,11 @@ def test_start_run_emits_run_start(tmp_path: Path) -> None:
     assert len(events) == 1
     assert events[0].event_kind == "run_start"
     assert events[0].payload.name == "test-run"  # type: ignore[union-attr]
+    assert events[0].payload.capabilities == {  # type: ignore[union-attr]
+        "steering": True,
+        "llm_usage": False,
+    }
+    assert events[0].payload.metadata == {"adapter": "unit-test"}  # type: ignore[union-attr]
 
 
 def test_log_individual_seed_default(tmp_path: Path) -> None:
@@ -92,6 +102,26 @@ def test_explicit_run_id_round_trip(tmp_path: Path) -> None:
     events = read_events(conn, "custom-run")
     conn.close()
     assert any(getattr(e.payload, "id", None) == "my-seed" for e in events)
+
+
+def test_log_run_update_and_explicit_event_id(tmp_path: Path) -> None:
+    h.configure(_embedded_config(tmp_path))
+    h.start_run(name="r", run_id="run-update")
+    h.log_run_update(
+        status="running",
+        capabilities={"live_updates": True},
+        score_directions={"loss": "lower"},
+        event_id="00000000-0000-0000-0000-000000000123",
+    )
+
+    conn = open_db(tmp_path / "hutch.duckdb")
+    events = read_events(conn, "run-update")
+    conn.close()
+
+    update = next(event for event in events if event.event_kind == "run_update")
+    assert str(update.event_id) == "00000000-0000-0000-0000-000000000123"
+    assert update.payload.capabilities == {"live_updates": True}  # type: ignore[union-attr]
+    assert update.payload.score_directions == {"loss": "lower"}  # type: ignore[union-attr]
 
 
 def test_start_population_returns_handle(tmp_path: Path) -> None:

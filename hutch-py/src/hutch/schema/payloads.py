@@ -54,6 +54,14 @@ class RunStartPayload(_PayloadBase):
     )
     git_commit: str | None = None
     config: dict[str, Any] = Field(default_factory=dict)
+    capabilities: dict[str, bool] = Field(
+        default_factory=dict,
+        description=(
+            "Truthful dashboard capabilities declared by the producer. "
+            "Common keys include `steering`, `llm_usage`, `live_updates`, and `audit`. "
+            "Absent keys mean unsupported or not logged, never implicitly true."
+        ),
+    )
     score_directions: dict[str, ScoreDirection] = Field(
         default_factory=dict,
         description=(
@@ -65,6 +73,17 @@ class RunStartPayload(_PayloadBase):
             "to a name-based heuristic in the UI."
         ),
     )
+
+
+class RunUpdatePayload(_PayloadBase):
+    """Updates mutable run-level metadata for live/watch producers."""
+
+    status: RunStatus | None = None
+    config: dict[str, Any] = Field(default_factory=dict)
+    capabilities: dict[str, bool] = Field(default_factory=dict)
+    score_directions: dict[str, ScoreDirection] = Field(default_factory=dict)
+    source_counts: dict[str, int] = Field(default_factory=dict)
+    watcher: dict[str, Any] = Field(default_factory=dict)
 
 
 class RunEndPayload(_PayloadBase):
