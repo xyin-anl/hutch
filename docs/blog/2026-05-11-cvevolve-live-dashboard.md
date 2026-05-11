@@ -94,8 +94,8 @@ and crossover edges.*
 
 The Population tab turns fitness events into a generation-by-generation
 trajectory. For this run, the search logs one scored candidate per
-generation, so the best, median, and worst lines move together while the
-primary score improves.
+generation, so Hutch shows a single candidate trajectory instead of a
+population spread.
 
 ![CVEvolve peak detection population view](../assets/screenshots/cvevolve-peak-population.png)
 *The population view shows the peak-detection score rising across 15
@@ -103,11 +103,13 @@ generations and 15 fitness samples.*
 
 The Objectives tab keeps the metric name and direction visible. In the
 peak-detection run, `peak_f1` is the primary objective, so the best-so-far
-view is the clearest way to read progress.
+view is the clearest way to read progress. The staircase tracks the
+incumbent best value, while the colored dots show every evaluated
+candidate by operator type.
 
 ![CVEvolve peak detection objectives view](../assets/screenshots/cvevolve-peak-objectives.png)
 *The objective history shows the cumulative best `peak_f1` value and the
-number of improvements made during the search.*
+proposals, refinements, and crossovers that produced each score.*
 
 The Operators tab shows how the search moved. In this peak-detection
 run, Hutch can distinguish generated proposals, refinements, and
