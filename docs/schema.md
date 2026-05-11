@@ -97,7 +97,22 @@ Every event has a fixed envelope plus a typed payload. The envelope:
 | `started_by` | `str | None` | no | Free-form actor identifier (user, CI job, agent id). |
 | `git_commit` | `str | None` | no | None |
 | `config` | `dict[str, Any]` | no | {} |
+| `capabilities` | `dict[str, bool]` | no | Truthful dashboard capabilities declared by the producer. Common keys include `steering`, `llm_usage`, `live_updates`, and `audit`. Absent keys mean unsupported or not logged, never implicitly true. |
 | `score_directions` | `dict[str, Literal['higher', 'lower']]` | no | Per-metric optimisation direction — `higher` (higher is better) or `lower` (lower is better). Used by the dashboard's Pareto frontier, best-composite aggregation, and any other consumer that needs to know which way is up. Declare every metric you log under `FitnessPayload.scores`. Unmatched metrics fall back to a name-based heuristic in the UI. |
+
+### `event_kind = "run_update"` (`RunUpdateEvent`)
+
+**Payload:** `RunUpdatePayload`
+
+| field | type | required | description |
+|---|---|---|---|
+| `metadata` | `dict[str, Any]` | no | Free-form extension dictionary. Adapters / SDKs use this for fields the canonical schema does not yet model. |
+| `status` | `Optional[Literal['running', 'finished', 'failed', 'cancelled']]` | no | None |
+| `config` | `dict[str, Any]` | no | {} |
+| `capabilities` | `dict[str, bool]` | no | {} |
+| `score_directions` | `dict[str, Literal['higher', 'lower']]` | no | {} |
+| `source_counts` | `dict[str, int]` | no | {} |
+| `watcher` | `dict[str, Any]` | no | {} |
 
 ### `event_kind = "run_end"` (`RunEndEvent`)
 

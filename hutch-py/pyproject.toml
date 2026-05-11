@@ -1,6 +1,6 @@
 [project]
 name = "thehutch"
-version = "0.1.0"
+version = "0.1.1"
 description = "The Hutch — observability, steering, and provenance for autonomous-research agents."
 readme = "README.md"
 requires-python = ">=3.11"

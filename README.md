@@ -11,20 +11,22 @@
 **The Hutch** is an observability, steering, and provenance dashboard for
 autonomous-research agents — covering linear "hypothesis → experiment →
 claim" pipelines as well as evolutionary, population-based, and
-self-improving systems (AlphaEvolve / OpenEvolve / ShinkaEvolve / DGM /
-SICA / AIDE / ASI-ARCH / FunSearch / POET / MAP-Elites).
+self-improving systems (AlphaEvolve / OpenEvolve / ShinkaEvolve /
+CVEvolve / DGM / SICA / AIDE / ASI-ARCH / FunSearch / POET /
+MAP-Elites).
 
 ## Status
 
-**v0.1.0** — schema marked unstable until v1.0.0. The canonical event
-schema is **additive-only**: new optional fields and new `kind` enum
-values are fine in any minor release, but renaming or removing existing
-fields is a breaking change that requires a migration. We follow
-[SemVer](https://semver.org/) on the public Python API and CLI.
+**v0.1.1 alpha** — schema marked unstable until v1.0.0. The canonical
+event schema is **additive-only** from v0.1.0 onward: new optional
+fields and new `kind` enum values are fine in any minor release, but
+renaming or removing existing fields is a breaking change that requires
+a migration. We follow [SemVer](https://semver.org/) on the public
+Python API and CLI.
 
-The dashboard, daemon, and SDK are usable today. Ten hand-tuned
-adapters ship in v0.1.0 (OpenEvolve, AIDE, DGM, QDax, ASI-ARCH,
-FunSearch, CORAL, POET, ptychi-evolve, ShinkaEvolve); the
+The dashboard, daemon, and SDK are usable today. Eleven hand-tuned
+adapters ship in v0.1.1 (OpenEvolve, AIDE, DGM, QDax, ASI-ARCH,
+FunSearch, CORAL, POET, CVEvolve, ptychi-evolve, ShinkaEvolve); the
 LLM-assisted importer is the long-tail fallback for anything else.
 
 ## Quick start
@@ -39,7 +41,8 @@ That's enough to host the dashboard. To populate it:
 **(a) Import an existing run.**
 
 ```bash
-hutch import ./checkpoints/circle_packing       # autodetect (10 adapters)
+hutch import ./checkpoints/circle_packing       # autodetect (11 adapters)
+hutch watch ./checkpoints/live_run              # poll and update live
 hutch import ./novel-format --llm                # LLM-assisted fallback
 ```
 
@@ -95,16 +98,19 @@ steering, integrations, security. See also [`CHANGELOG.md`](CHANGELOG.md).
 | `funsearch`      | FunSearch programs.jsonl |
 | `coral`          | CORAL multi-agent runs (heartbeats → steering, memory → archive) |
 | `poet`           | POET coevolution dumps (environments + agents) |
+| `cvevolve`       | CVEvolve session roots or `history/search_history.sqlite`; optional `--include-audit` reads `messages.sqlite` / `tool_calls.sqlite` |
 | `ptychi_evolve`  | ptychi-evolve rounds (X-ray ptychography) |
 | `shinka_evolve`  | ShinkaEvolve candidates + meta-mutations |
 | LLM-assisted     | Anything else (`hutch import --llm <path>`) |
 
 ## Steering
 
-The dashboard is a *control surface*, not just a viewer. Agents poll
+The dashboard can be a *control surface* for runs that declare
+`capabilities={"steering": True}`. Those agents poll
 `hutch.steering.poll()` between iterations; the UI's Steering tab issues
 commands (`pause_run`, `cancel_individual`, `fork_from`, `inject_hint`,
-`approve_hitl`, …). See [`docs/steering.md`](docs/steering.md).
+`approve_hitl`, …). Imported/offline runs stay read-only. See
+[`docs/steering.md`](docs/steering.md).
 
 ## Examples
 

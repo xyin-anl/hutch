@@ -1,9 +1,12 @@
 # Steering
 
 Steering is the write-back channel from the dashboard to a running agent.
-The agent registers per-command handlers, calls `hutch.steering.poll()`
-between iterations, and acts on the commands it receives. The dashboard
-has an issue-command form, an HITL approval banner, and an audit log.
+It is available only for runs that explicitly declare
+`capabilities={"steering": True}` and are still running. The agent
+registers per-command handlers, calls `hutch.steering.poll()` between
+iterations, and acts on the commands it receives. The dashboard has an
+issue-command form, an HITL approval banner, and an audit log. Finished
+or imported runs show steering history read-only when it exists.
 
 ```mermaid
 sequenceDiagram
@@ -63,7 +66,7 @@ def on_cancel(cmd):
     cancelled.add(cmd.target_id)
     return f"will skip {cmd.target_id}"
 
-h.start_run(name="my-loop")
+h.start_run(name="my-loop", capabilities={"steering": True})
 while True:
     steering.poll()        # drains, dispatches, and acks each command
     if paused:

@@ -10,7 +10,7 @@ hide:
 The Hutch is a dashboard for autonomous-research agents. It works for a small
 linear "hypothesis → experiment → claim" loop and scales up to large
 evolutionary or self-improving systems like OpenEvolve, ShinkaEvolve, DGM,
-SICA, AIDE, ASI-ARCH, FunSearch, POET, and MAP-Elites.
+CVEvolve, SICA, AIDE, ASI-ARCH, FunSearch, POET, and MAP-Elites.
 
 Whatever your loop looks like, Hutch normalizes it into the same five
 concepts: **Individual, Operator, Fitness, Lineage, Archive**. One dashboard
@@ -42,8 +42,8 @@ event to the daemon, with kind, project, status, and event count.*
 
     ---
 
-    Three ways to feed data into Hutch: import an existing checkpoint,
-    drop the LLM skill into your agent, or call the Python SDK.
+    Three ways to feed data into Hutch: import or watch an existing
+    checkpoint, drop the LLM skill into your agent, or call the Python SDK.
 
     [:octicons-arrow-right-24: Distribution](distribution.md)
 
@@ -60,7 +60,7 @@ event to the daemon, with kind, project, status, and event count.*
 
     ---
 
-    Ten built-in adapters cover the major systems. The LLM-assisted
+    Eleven built-in adapters cover the major systems. The LLM-assisted
     importer covers everything else.
 
     [:octicons-arrow-right-24: Adapters](adapters.md)
@@ -103,11 +103,11 @@ deposits.
 
 ## Status
 
-This is **v0.1.0**, the first alpha release. The Python API and CLI follow
+This is **v0.1.1**, an alpha release. The Python API and CLI follow
 [SemVer](https://semver.org/). The canonical event schema is additive-only
-between minor releases until v1.0.0: new optional fields and new `kind` enum
-values are fine, but renaming or removing existing fields is a breaking
-change and requires a migration. See the
+from the v0.1.0 baseline until v1.0.0: new optional fields and new `kind`
+enum values are fine, but renaming or removing existing fields is a
+breaking change and requires a migration. See the
 [changelog](https://github.com/xyin-anl/hutch/blob/main/CHANGELOG.md).
 
 ## License

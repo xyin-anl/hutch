@@ -112,4 +112,5 @@ nav:
       - Publication & provenance: publication.md
   - Security: security.md
   - Blog:
+      - "CVEvolve live dashboard (May 2026)": blog/2026-05-11-cvevolve-live-dashboard.md
       - "v0.1.0 launch (May 2026)": blog/2026-05-06-hutch-v0.1.0.md

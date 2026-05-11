@@ -12,8 +12,8 @@
 an observability, steering, and provenance dashboard for autonomous-research
 agents. It covers linear "hypothesis → experiment → claim" pipelines as well
 as evolutionary, population-based, and self-improving systems
-(AlphaEvolve / OpenEvolve / ShinkaEvolve / DGM / SICA / AIDE / ASI-ARCH /
-FunSearch / POET / MAP-Elites).
+(AlphaEvolve / OpenEvolve / ShinkaEvolve / CVEvolve / DGM / SICA /
+AIDE / ASI-ARCH / FunSearch / POET / MAP-Elites).
 
 ## Install
 
@@ -24,13 +24,15 @@ hutch serve               # → http://localhost:7777
 
 ## Three ways to populate the dashboard
 
-**(a) Import an existing run.** Ten hand-tuned adapters ship in this
+**(a) Import an existing run.** Eleven hand-tuned adapters ship in this
 release: OpenEvolve, AIDE, DGM, QDax, ASI-ARCH, FunSearch, CORAL, POET,
-ptychi-evolve, ShinkaEvolve. For anything else, the LLM-assisted
+CVEvolve, ptychi-evolve, ShinkaEvolve. For anything else, the LLM-assisted
 importer asks an LLM to write an adapter on the fly:
 
 ```bash
-hutch import ./checkpoints/circle_packing       # autodetect (10 adapters)
+hutch import ./checkpoints/circle_packing       # autodetect (11 adapters)
+hutch watch ./checkpoints/live_run              # poll and update live
+hutch watch ./cvevolve-run --include-audit      # opt into raw CVEvolve audit logs
 hutch import ./novel-format --llm                # LLM-assisted fallback
 ```
 
@@ -51,10 +53,11 @@ events as it works.
 
 ## Steering
 
-The dashboard is a control surface, not just a viewer. Agents poll
+The dashboard can be a control surface for runs that declare
+`capabilities={"steering": True}`. Those agents poll
 `hutch.steering.poll()` between iterations; the UI's Steering tab issues
 commands (`pause_run`, `cancel_individual`, `fork_from`, `inject_hint`,
-`approve_hitl`, …).
+`approve_hitl`, …). Imported/offline runs stay read-only.
 
 ## Documentation
 

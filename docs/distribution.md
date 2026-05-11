@@ -6,13 +6,13 @@ events from any layer identically.
 
 | Layer | Surface | Coverage | Time to first dashboard |
 |---|---|---|---|
-| **1. Importer** | `hutch import <path>` (ten built-in adapters plus an LLM fallback) | Every system | Seconds |
+| **1. Importer / watcher** | `hutch import <path>` or `hutch watch <path>` (eleven built-in adapters plus an LLM fallback) | Every system | Seconds |
 | **2. Skill** | Drop `SKILL.md` into your agent's instructions | Any LLM-driven loop | One agent restart |
 | **3. SDK** | `import hutch as h; h.log_*(...)` | Any Python loop you control | Hours |
 
 ```mermaid
 flowchart LR
-    L1["<b>Layer 1</b><br/>hutch import"]
+    L1["<b>Layer 1</b><br/>hutch import / watch"]
     L2["<b>Layer 2</b><br/>Agent + SKILL.md"]
     L3["<b>Layer 3</b><br/>Python SDK"]
 
@@ -53,11 +53,25 @@ the full dashboard.
 pip install thehutch
 hutch serve &                   # localhost:7777
 hutch import ./checkpoint       # auto-detects from the registry
+hutch watch ./checkpoint        # poll the same adapter live
 ```
 
-Ten systems have built-in adapters in v0.1.0: OpenEvolve, AIDE, DGM,
-QDax, ASI-ARCH, FunSearch, CORAL, POET, ptychi-evolve, and ShinkaEvolve.
+Eleven systems have built-in adapters in v0.1.1: OpenEvolve, AIDE, DGM,
+QDax, ASI-ARCH, FunSearch, CORAL, POET, CVEvolve, ptychi-evolve, and
+ShinkaEvolve.
 See [Adapters](adapters.md) for the format each one expects.
+
+`hutch import` remains batch mode. `hutch watch <path>` and
+`hutch import --watch <path>` repeatedly poll the adapter source, write
+only new deterministic event IDs, mark the run as `running` through
+`run_update`, and emit `run_end` when explicit or idle completion is
+detected.
+
+The dashboard is intentionally sparse. Cards and tabs appear only when
+the event log supports them, either through explicit run capabilities
+(`steering`, `llm_usage`, `live_updates`, `audit`) or conservative
+inference from observed events. A logged zero is shown as zero; missing
+data is treated as not logged or unsupported.
 
 For anything else, the LLM-assisted importer reads a file or directory
 of unknown records, asks an LLM to write a `to_canonical(record)`
