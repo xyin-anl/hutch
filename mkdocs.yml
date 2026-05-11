@@ -1,10 +1,10 @@
 site_name: The Hutch
 site_description: Observability, steering, and provenance for autonomous-research agents.
-site_url: https://xyin.github.io/hutch/
+site_url: https://xyin-anl.github.io/hutch/
 site_author: The Hutch contributors
 
-repo_url: https://github.com/xyin/hutch
-repo_name: xyin/hutch
+repo_url: https://github.com/xyin-anl/hutch
+repo_name: xyin-anl/hutch
 edit_uri: edit/main/docs/
 
 docs_dir: docs
@@ -54,7 +54,7 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/xyin/hutch
+      link: https://github.com/xyin-anl/hutch
       name: Hutch on GitHub
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/thehutch/

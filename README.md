@@ -74,7 +74,7 @@ event store:
 3. **Native SDK / OTel** — `import hutch; h.log_individual(...)`
    directly.
 
-**Documentation:** <https://xyin.github.io/hutch/> — concepts, schema, adapters,
+**Documentation:** <https://xyin-anl.github.io/hutch/> — concepts, schema, adapters,
 steering, integrations, security. See also [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Adapters

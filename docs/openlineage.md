@@ -84,8 +84,8 @@ An OL event posted by Hutch looks like:
     "runId": "run-abc123",
     "facets": {
       "hutchOperator": {
-        "_producer": "https://github.com/xyin/hutch/v0.1.0",
-        "_schemaURL": "https://github.com/xyin/hutch/v0.1.0#/$defs/hutchOperator",
+        "_producer": "https://github.com/xyin-anl/hutch/v0.1.0",
+        "_schemaURL": "https://github.com/xyin-anl/hutch/v0.1.0#/$defs/hutchOperator",
         "operator_id": "op-42",
         "operator_kind": "refine",
         "cost_usd": 0.012,
@@ -101,7 +101,7 @@ An OL event posted by Hutch looks like:
   },
   "inputs":  [{"namespace": "hutch", "name": "individual:ind-A"}],
   "outputs": [{"namespace": "hutch", "name": "individual:ind-B"}],
-  "producer":  "https://github.com/xyin/hutch/v0.1.0",
+  "producer":  "https://github.com/xyin-anl/hutch/v0.1.0",
   "schemaURL": "https://openlineage.io/spec/2-0-2/OpenLineage.json#/$defs/RunEvent"
 }
 ```

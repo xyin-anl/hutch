@@ -2,7 +2,7 @@
 
 > Observability, steering, and provenance for autonomous-research agents.
 
-`thehutch` is the PyPI distribution for [Hutch](https://github.com/xyin/hutch) —
+`thehutch` is the PyPI distribution for [Hutch](https://github.com/xyin-anl/hutch) —
 an observability, steering, and provenance dashboard for autonomous-research
 agents. It covers linear "hypothesis → experiment → claim" pipelines as well
 as evolutionary, population-based, and self-improving systems
@@ -39,7 +39,7 @@ h.end_run()
 ```
 
 **(c) Drop the skill into an LLM-driven agent.** See the
-[skill](https://github.com/xyin/hutch/tree/main/hutch-skill) — it
+[skill](https://github.com/xyin-anl/hutch/tree/main/hutch-skill) — it
 makes structured tool calls so any Claude / GPT-4 agent emits canonical
 events as it works.
 
@@ -52,13 +52,13 @@ commands (`pause_run`, `cancel_individual`, `fork_from`, `inject_hint`,
 
 ## Documentation
 
-- [Concepts](https://github.com/xyin/hutch/blob/main/docs/concepts.md)
-- [Schema](https://github.com/xyin/hutch/blob/main/docs/schema.md) (auto-generated)
-- [Distribution](https://github.com/xyin/hutch/blob/main/docs/distribution.md)
-- [Adapters](https://github.com/xyin/hutch/blob/main/docs/adapters.md)
-- [Steering](https://github.com/xyin/hutch/blob/main/docs/steering.md)
-- [Security](https://github.com/xyin/hutch/blob/main/docs/security.md)
-- [Publication exports](https://github.com/xyin/hutch/blob/main/docs/publication.md)
+- [Concepts](https://github.com/xyin-anl/hutch/blob/main/docs/concepts.md)
+- [Schema](https://github.com/xyin-anl/hutch/blob/main/docs/schema.md) (auto-generated)
+- [Distribution](https://github.com/xyin-anl/hutch/blob/main/docs/distribution.md)
+- [Adapters](https://github.com/xyin-anl/hutch/blob/main/docs/adapters.md)
+- [Steering](https://github.com/xyin-anl/hutch/blob/main/docs/steering.md)
+- [Security](https://github.com/xyin-anl/hutch/blob/main/docs/security.md)
+- [Publication exports](https://github.com/xyin-anl/hutch/blob/main/docs/publication.md)
 
 The schema is **additive-only** between minor releases: new optional
 fields and new `kind` enum values are fine; renaming or removing

@@ -108,8 +108,8 @@ This is **v0.1.0**, the first alpha release. The Python API and CLI follow
 between minor releases until v1.0.0: new optional fields and new `kind` enum
 values are fine, but renaming or removing existing fields is a breaking
 change and requires a migration. See the
-[changelog](https://github.com/xyin/hutch/blob/main/CHANGELOG.md).
+[changelog](https://github.com/xyin-anl/hutch/blob/main/CHANGELOG.md).
 
 ## License
 
-Apache 2.0. See [LICENSE](https://github.com/xyin/hutch/blob/main/LICENSE).
+Apache 2.0. See [LICENSE](https://github.com/xyin-anl/hutch/blob/main/LICENSE).

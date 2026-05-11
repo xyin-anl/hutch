@@ -25,7 +25,7 @@ from hutch.schema import AnyEvent
 logger = logging.getLogger("hutch.openlineage")
 
 
-OPENLINEAGE_PRODUCER = f"https://github.com/xyin/hutch/v{__version__}"
+OPENLINEAGE_PRODUCER = f"https://github.com/xyin-anl/hutch/v{__version__}"
 """``producer`` URI for every emitted RunEvent. Per OL spec, identifies
 the integration that emitted the event."""
 

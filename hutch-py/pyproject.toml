@@ -69,9 +69,9 @@ publish = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/xyin/hutch"
-Repository = "https://github.com/xyin/hutch"
-Issues = "https://github.com/xyin/hutch/issues"
+Homepage = "https://github.com/xyin-anl/hutch"
+Repository = "https://github.com/xyin-anl/hutch"
+Issues = "https://github.com/xyin-anl/hutch/issues"
 
 [project.scripts]
 hutch = "hutch.cli:main"

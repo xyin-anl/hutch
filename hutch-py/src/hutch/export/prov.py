@@ -37,7 +37,7 @@ PROV_FORMATS: tuple[ProvFormat, ...] = ("turtle", "json-ld", "n-triples", "xml")
 _PREAMBLE = (
     "@prefix prov: <http://www.w3.org/ns/prov#> .\n"
     "@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .\n"
-    "@prefix hutch: <https://github.com/xyin/hutch/ns#> .\n"
+    "@prefix hutch: <https://github.com/xyin-anl/hutch/ns#> .\n"
     "\n"
 )
 

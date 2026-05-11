@@ -148,4 +148,4 @@ PROV-O attribute names (`hutch:*`), and the RO-Crate custom properties
 `ARA_FORMAT_VERSION` constant exposes the on-disk version; it bumps
 only on incompatible changes, with a corresponding migration path
 documented in
-[CHANGELOG.md](https://github.com/xyin/hutch/blob/main/CHANGELOG.md).
+[CHANGELOG.md](https://github.com/xyin-anl/hutch/blob/main/CHANGELOG.md).
