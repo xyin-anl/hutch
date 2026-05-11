@@ -62,6 +62,7 @@ export type RunStatus = "running" | "finished" | "failed" | "cancelled";
 
 export type EventKind =
   | "run_start"
+  | "run_update"
   | "run_end"
   | "individual"
   | "operator"
@@ -92,12 +93,22 @@ export interface RunStartPayload extends BasePayload {
   started_by?: string | null;
   git_commit?: string | null;
   config?: Record<string, unknown>;
+  capabilities?: Record<string, boolean>;
   score_directions?: Record<string, ScoreDirection>;
 }
 
 export interface RunEndPayload extends BasePayload {
   status: RunStatus;
   summary?: string | null;
+}
+
+export interface RunUpdatePayload extends BasePayload {
+  status?: RunStatus | null;
+  config?: Record<string, unknown>;
+  capabilities?: Record<string, boolean>;
+  score_directions?: Record<string, ScoreDirection>;
+  source_counts?: Record<string, number>;
+  watcher?: Record<string, unknown>;
 }
 
 export interface IndividualPayload extends BasePayload {
@@ -196,6 +207,11 @@ export interface EvidencePayload extends BasePayload {
   source_quality?: number | null;
 }
 
+export interface StreamEventPayload extends BasePayload {
+  label: string;
+  text?: string | null;
+}
+
 export type SteeringActor = "human" | "agent" | "policy";
 
 export type SteeringCommandKind =
@@ -235,6 +251,10 @@ export interface RunStartEvent extends EnvelopeBase {
 export interface RunEndEvent extends EnvelopeBase {
   event_kind: "run_end";
   payload: RunEndPayload;
+}
+export interface RunUpdateEvent extends EnvelopeBase {
+  event_kind: "run_update";
+  payload: RunUpdatePayload;
 }
 export interface IndividualEvent extends EnvelopeBase {
   event_kind: "individual";
@@ -276,12 +296,17 @@ export interface TreeExpansionEvent extends EnvelopeBase {
   event_kind: "tree_expansion";
   payload: TreeExpansionPayload;
 }
+export interface StreamEvent extends EnvelopeBase {
+  event_kind: "stream_event";
+  payload: StreamEventPayload;
+}
 
 // Catch-all for events the views don't deeply inspect yet.
 export interface GenericEvent extends EnvelopeBase {
   event_kind: Exclude<
     EventKind,
     | "run_start"
+    | "run_update"
     | "run_end"
     | "individual"
     | "operator"
@@ -292,6 +317,7 @@ export interface GenericEvent extends EnvelopeBase {
     | "pareto_snapshot"
     | "self_mod"
     | "tree_expansion"
+    | "stream_event"
     | "steering_command"
   >;
   payload: BasePayload & Record<string, unknown>;
@@ -300,6 +326,7 @@ export interface GenericEvent extends EnvelopeBase {
 export type HutchEvent =
   | RunStartEvent
   | RunEndEvent
+  | RunUpdateEvent
   | IndividualEvent
   | OperatorEvent
   | FitnessEvent
@@ -309,6 +336,7 @@ export type HutchEvent =
   | ParetoSnapshotEvent
   | SelfModEvent
   | TreeExpansionEvent
+  | StreamEvent
   | SteeringCommandEvent
   | GenericEvent;
 
@@ -323,6 +351,8 @@ export interface RunSummary {
   status?: string | null;
   event_count: number;
   kinds_seen?: EventKind[];
+  capabilities?: Record<string, boolean>;
+  system_kind?: SystemKind;
 }
 
 export type ScoreDirection = "higher" | "lower";
@@ -333,6 +363,9 @@ export interface RunDetail {
   kinds_seen: EventKind[];
   first_timestamp_ns: number;
   last_timestamp_ns: number;
+  status?: RunStatus | null;
+  capabilities?: Record<string, boolean>;
+  system_kind?: SystemKind;
   /**
    * Per-metric optimisation direction declared by the producer at
    * ``run_start``. The Pareto / Best Composite / Population views
@@ -342,10 +375,18 @@ export interface RunDetail {
   score_directions?: Record<string, ScoreDirection>;
 }
 
+export interface StreamEventsPage {
+  events: StreamEvent[];
+  total: number;
+  offset: number;
+  limit: number;
+}
+
 // ---------------- helpers ----------------
 
 /** Inferred system family from the operator + individual events in a run. */
 export type SystemKind =
+  | "unknown"
   | "linear"
   | "evolutionary"
   | "self-improving"
@@ -364,6 +405,10 @@ export function inferSystemKind(
     opKinds.has("migrate")
   ) {
     return "evolutionary";
+  }
+  if (operators.length === 0 && individuals.length === 0) return "unknown";
+  if (operators.length === 0 && individuals.filter((i) => !i.payload.is_seed).length === 0) {
+    return "unknown";
   }
   // Population structure also signals evolutionary: multiple islands, OR more
   // than one seed (parallel chains), are not what a linear run looks like.

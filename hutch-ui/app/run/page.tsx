@@ -10,6 +10,7 @@ import { LiveDot } from "@/components/nav/LiveDot";
 import { TopBar } from "@/components/nav/TopBar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { ArchiveView } from "@/components/views/Archive";
+import { CVEvolveAuditView } from "@/components/views/CVEvolveAudit";
 import { EvidenceView } from "@/components/views/Evidence";
 import { OperatorTraceView } from "@/components/views/OperatorTrace";
 import { OperatorsView } from "@/components/views/Operators";
@@ -21,6 +22,8 @@ import { SelfModAuditView } from "@/components/views/SelfModAudit";
 import { SteeringView } from "@/components/views/Steering";
 import { TreeSearchView } from "@/components/views/TreeSearch";
 import { fetcher } from "@/lib/api";
+import type { SteeringRecord } from "@/lib/api";
+import { canIssueSteering, canShowSteering } from "@/lib/capabilities";
 import type {
   ClaimEvent,
   DescriptorEvent,
@@ -42,6 +45,7 @@ type TabKey =
   | "objectives"
   | "operators"
   | "operator-trace"
+  | "cvevolve-audit"
   | "self-mod"
   | "tree-search"
   | "evidence"
@@ -65,10 +69,58 @@ export default function RunPage() {
 function RunDashboard() {
   const searchParams = useSearchParams();
   const runId = searchParams.get("id") ?? "";
+  const encodedRunId = runId ? encodeURIComponent(runId) : "";
   const [tab, setTab] = useState<TabKey>("overview");
 
   const { mutate } = useSWRConfig();
   const [live, setLive] = useState(false);
+
+  const detail = useSWR<RunDetail>(
+    runId ? `/runs/${encodedRunId}` : null,
+    fetcher,
+    { refreshInterval: 5000 },
+  );
+  const auditTabAvailable = detail.data?.capabilities?.audit === true;
+  const shouldLoadSteering =
+    runId.length > 0 &&
+    (detail.data?.capabilities?.steering === true ||
+      detail.data?.kinds_seen.includes("steering_command") === true);
+  const individuals = useSWR<IndividualEvent[]>(
+    runId ? `/runs/${encodedRunId}/individuals` : null,
+    fetcher,
+  );
+  const operators = useSWR<OperatorEvent[]>(
+    runId ? `/runs/${encodedRunId}/operators` : null,
+    fetcher,
+  );
+  const fitness = useSWR<FitnessEvent[]>(
+    runId ? `/runs/${encodedRunId}/fitness` : null,
+    fetcher,
+  );
+  const descriptors = useSWR<DescriptorEvent[]>(
+    runId ? `/runs/${encodedRunId}/descriptors` : null,
+    fetcher,
+  );
+  const selfMods = useSWR<SelfModEvent[]>(
+    runId ? `/runs/${encodedRunId}/self_mods` : null,
+    fetcher,
+  );
+  const treeExpansions = useSWR<TreeExpansionEvent[]>(
+    runId ? `/runs/${encodedRunId}/tree_expansions` : null,
+    fetcher,
+  );
+  const claims = useSWR<ClaimEvent[]>(
+    runId ? `/runs/${encodedRunId}/claims` : null,
+    fetcher,
+  );
+  const evidence = useSWR<EvidenceEvent[]>(
+    runId ? `/runs/${encodedRunId}/evidence` : null,
+    fetcher,
+  );
+  const steeringHistory = useSWR<SteeringRecord[]>(
+    shouldLoadSteering ? `/steering/${encodedRunId}` : null,
+    fetcher,
+  );
 
   useEffect(() => {
     if (!runId) return;
@@ -84,50 +136,14 @@ function RunDashboard() {
         void mutate(`/runs/${enc}/descriptors`);
         void mutate(`/runs/${enc}/claims`);
         void mutate(`/runs/${enc}/evidence`);
-        void mutate(`/steering/${enc}`);
+        if (shouldLoadSteering) void mutate(`/steering/${enc}`);
       },
+      () => setLive(false),
+      () => setLive(true),
       () => setLive(false),
     );
     return () => sub.close();
-  }, [runId, mutate]);
-
-  const detail = useSWR<RunDetail>(
-    runId ? `/runs/${encodeURIComponent(runId)}` : null,
-    fetcher,
-    { refreshInterval: 5000 },
-  );
-  const individuals = useSWR<IndividualEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/individuals` : null,
-    fetcher,
-  );
-  const operators = useSWR<OperatorEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/operators` : null,
-    fetcher,
-  );
-  const fitness = useSWR<FitnessEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/fitness` : null,
-    fetcher,
-  );
-  const descriptors = useSWR<DescriptorEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/descriptors` : null,
-    fetcher,
-  );
-  const selfMods = useSWR<SelfModEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/self_mods` : null,
-    fetcher,
-  );
-  const treeExpansions = useSWR<TreeExpansionEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/tree_expansions` : null,
-    fetcher,
-  );
-  const claims = useSWR<ClaimEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/claims` : null,
-    fetcher,
-  );
-  const evidence = useSWR<EvidenceEvent[]>(
-    runId ? `/runs/${encodeURIComponent(runId)}/evidence` : null,
-    fetcher,
-  );
+  }, [runId, mutate, shouldLoadSteering]);
 
   const inds = useMemo(() => individuals.data ?? [], [individuals.data]);
   const ops = useMemo(() => operators.data ?? [], [operators.data]);
@@ -140,6 +156,13 @@ function RunDashboard() {
   );
   const claimEvents = useMemo(() => claims.data ?? [], [claims.data]);
   const evidenceEvents = useMemo(() => evidence.data ?? [], [evidence.data]);
+  const steeringRecords = useMemo(
+    () => (shouldLoadSteering ? steeringHistory.data ?? [] : []),
+    [shouldLoadSteering, steeringHistory.data],
+  );
+  const steeringVisible =
+    shouldLoadSteering && canShowSteering(detail.data, steeringRecords);
+  const steeringWritable = canIssueSteering(detail.data);
 
   const tabs: TabSpec[] = [
     { key: "overview", label: "Overview", available: true },
@@ -162,6 +185,11 @@ function RunDashboard() {
       available: ops.length > 0,
     },
     {
+      key: "cvevolve-audit",
+      label: "CVEvolve Audit",
+      available: auditTabAvailable,
+    },
+    {
       key: "self-mod",
       label: "Self-Mod Audit",
       available: selfModEvents.length > 0,
@@ -176,7 +204,11 @@ function RunDashboard() {
       label: "Evidence Graph",
       available: claimEvents.length > 0 || evidenceEvents.length > 0,
     },
-    { key: "steering", label: "Steering", available: true },
+    {
+      key: "steering",
+      label: "Steering",
+      available: steeringVisible,
+    },
   ];
   const visibleTabs = tabs.filter((t) => t.available);
 
@@ -208,7 +240,8 @@ function RunDashboard() {
     selfMods.isLoading ||
     treeExpansions.isLoading ||
     claims.isLoading ||
-    evidence.isLoading;
+    evidence.isLoading ||
+    (shouldLoadSteering && steeringHistory.isLoading);
   const error =
     detail.error ||
     individuals.error ||
@@ -218,7 +251,8 @@ function RunDashboard() {
     selfMods.error ||
     treeExpansions.error ||
     claims.error ||
-    evidence.error;
+    evidence.error ||
+    (shouldLoadSteering ? steeringHistory.error : undefined);
 
   return (
     <div className="min-h-screen">
@@ -320,6 +354,8 @@ function RunDashboard() {
                 <OperatorsView operators={ops} />
               ) : tab === "operator-trace" ? (
                 <OperatorTraceView operators={ops} individuals={inds} />
+              ) : tab === "cvevolve-audit" ? (
+                <CVEvolveAuditView runId={runId} />
               ) : tab === "self-mod" ? (
                 <SelfModAuditView runId={runId} selfMods={selfModEvents} />
               ) : tab === "tree-search" ? (
@@ -327,7 +363,15 @@ function RunDashboard() {
               ) : tab === "evidence" ? (
                 <EvidenceView claims={claimEvents} evidence={evidenceEvents} />
               ) : (
-                <SteeringView runId={runId} />
+                <SteeringView
+                  runId={runId}
+                  canIssue={steeringWritable}
+                  readOnlyReason={
+                    detail.data?.capabilities?.steering === true
+                      ? "This run is not currently running; steering history is read-only."
+                      : "This run does not advertise live steering; showing logged history only."
+                  }
+                />
               )}
             </section>
           </>

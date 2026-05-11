@@ -2,6 +2,7 @@
 
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
+import { formatUsd, sumObservedNumbers } from "@/lib/observed";
 import {
   inferSystemKind,
   type FitnessEvent,
@@ -71,6 +72,8 @@ function guessOverviewDirection(metric: string): ScoreDirection | undefined {
 }
 
 const SYSTEM_BADGE_COLORS: Record<SystemKind, string> = {
+  unknown:
+    "border-neutral-300 bg-neutral-100 text-neutral-700 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-300",
   linear:
     "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-700 dark:bg-sky-950 dark:text-sky-200",
   evolutionary:
@@ -112,13 +115,10 @@ export function OverviewView({
     return <EmptyState title="No run summary yet" />;
   }
 
-  const systemKind = inferSystemKind(operators, individuals);
+  const systemKind = detail.system_kind ?? inferSystemKind(operators, individuals);
   const badge = SYSTEM_BADGE_COLORS[systemKind];
 
-  const totalCost = operators.reduce(
-    (acc, o) => acc + (o.payload.cost_usd ?? 0),
-    0,
-  );
+  const loggedCost = sumObservedNumbers(operators, (o) => o.payload.cost_usd);
   const scoreDirections = detail.score_directions ?? {};
   const compositeScores = fitness
     .map((f) =>
@@ -146,7 +146,11 @@ export function OverviewView({
           {systemKind}
         </span>
         <span className="text-xs text-neutral-500">
-          inferred from operator kinds: {operators.length === 0 ? "—" : sampleOperatorKinds(operators)}
+          {systemKind === "unknown"
+            ? "classification unavailable from logged events"
+            : `inferred from operator kinds: ${
+                operators.length === 0 ? "—" : sampleOperatorKinds(operators)
+              }`}
         </span>
       </div>
 
@@ -166,22 +170,26 @@ export function OverviewView({
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-        <StatCard
-          label="Best composite"
-          value={
-            bestComposite === null
-              ? "—"
-              : Number.isInteger(bestComposite)
+        {bestComposite !== null ? (
+          <StatCard
+            label="Best composite"
+            value={
+              Number.isInteger(bestComposite)
                 ? bestComposite.toString()
                 : bestComposite.toFixed(3)
-          }
-          hint="across all fitness events"
-        />
-        <StatCard
-          label="LLM cost"
-          value={`$${totalCost.toFixed(4)}`}
-          hint="sum of operator.cost_usd"
-        />
+            }
+            hint="derived from logged fitness"
+          />
+        ) : null}
+        {loggedCost.observed ? (
+          <StatCard
+            label="LLM cost"
+            value={formatUsd(loggedCost.total)}
+            hint={`sum of ${loggedCost.count} logged operator.cost_usd value${
+              loggedCost.count === 1 ? "" : "s"
+            }`}
+          />
+        ) : null}
         <StatCard
           label="Duration"
           value={formatDurationNs(detail.first_timestamp_ns, detail.last_timestamp_ns)}

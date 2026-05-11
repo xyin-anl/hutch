@@ -32,6 +32,8 @@ export function subscribeRunStream(
   runId: string,
   onEvent: (event: HutchEvent) => void,
   onError?: (error: Error) => void,
+  onOpen?: () => void,
+  onClose?: () => void,
 ): RunStreamSubscription {
   let socket: WebSocket | null = null;
   let backoff = 500;
@@ -63,10 +65,12 @@ export function subscribeRunStream(
 
     socket.onopen = () => {
       backoff = 500;
+      onOpen?.();
     };
 
     socket.onclose = () => {
       socket = null;
+      onClose?.();
       scheduleReconnect();
     };
 

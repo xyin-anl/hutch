@@ -68,6 +68,7 @@ describe("HomePage", () => {
           started_at_ns: 1_700_000_000_000_000_000,
           ended_at_ns: 1_700_000_010_000_000_000,
           event_count: 42,
+          system_kind: "evolutionary",
         },
       ],
       text: async () => "ok",
@@ -77,7 +78,29 @@ describe("HomePage", () => {
       expect(screen.getByText("run-abc")).toBeInTheDocument();
     });
     expect(screen.getByText("circle-packing")).toBeInTheDocument();
+    expect(screen.getByText("evolutionary")).toBeInTheDocument();
     expect(screen.getByText("42")).toBeInTheDocument();
+  });
+
+  it("does not infer linear from event-kind aggregates alone", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => [
+        {
+          run_id: "run-weak",
+          project: "hutch",
+          event_count: 3,
+          kinds_seen: ["run_start", "operator", "fitness"],
+        },
+      ],
+      text: async () => "ok",
+    });
+    renderWithFreshCache(<HomePage />);
+    await waitFor(() => {
+      expect(screen.getByText("run-weak")).toBeInTheDocument();
+    });
+    expect(screen.getByText("unknown")).toBeInTheDocument();
+    expect(screen.queryByText("linear")).not.toBeInTheDocument();
   });
 
   it("shows daemon-unreachable empty state on fetch error", async () => {

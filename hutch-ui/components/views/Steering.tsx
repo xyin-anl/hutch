@@ -49,7 +49,15 @@ function formatRelative(ns: number, nowNs: number): string {
   return `${Math.floor(deltaMs / 3_600_000)}h ago`;
 }
 
-export function SteeringView({ runId }: { runId: string }) {
+export function SteeringView({
+  runId,
+  canIssue = true,
+  readOnlyReason,
+}: {
+  runId: string;
+  canIssue?: boolean;
+  readOnlyReason?: string;
+}) {
   const history = useSWR<SteeringRecord[]>(
     `/steering/${encodeURIComponent(runId)}`,
     fetcher,
@@ -134,73 +142,78 @@ export function SteeringView({ runId }: { runId: string }) {
         />
       </div>
 
-      {/* Send-command form */}
-      <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
-        <h3 className="mb-3 text-sm font-medium text-neutral-800 dark:text-neutral-200">
-          Issue command
-        </h3>
-        <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
-          <label className="flex flex-col text-xs text-neutral-500">
-            command
-            <select
-              value={command}
-              onChange={(e) => setCommand(e.target.value as SteeringCommandKind)}
-              className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+      {canIssue ? (
+        <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
+          <h3 className="mb-3 text-sm font-medium text-neutral-800 dark:text-neutral-200">
+            Issue command
+          </h3>
+          <form onSubmit={onSubmit} className="grid gap-3 md:grid-cols-[1fr_1fr_2fr_auto]">
+            <label className="flex flex-col text-xs text-neutral-500">
+              command
+              <select
+                value={command}
+                onChange={(e) => setCommand(e.target.value as SteeringCommandKind)}
+                className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              >
+                {(Object.keys(COMMAND_LABELS) as SteeringCommandKind[]).map((k) => (
+                  <option key={k} value={k}>
+                    {COMMAND_LABELS[k]}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col text-xs text-neutral-500">
+              target id {targetHint ? `(${targetHint})` : "(optional)"}
+              <input
+                type="text"
+                value={targetId}
+                onChange={(e) => setTargetId(e.target.value)}
+                placeholder={targetHint === "individual" ? "ind-…" : ""}
+                className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              />
+            </label>
+            <label className="flex flex-col text-xs text-neutral-500">
+              params (JSON)
+              <input
+                type="text"
+                value={paramsText}
+                onChange={(e) => setParamsText(e.target.value)}
+                placeholder='{"reason": "user requested"}'
+                className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              />
+            </label>
+            <label className="flex flex-col text-xs text-neutral-500">
+              actor
+              <select
+                value={actor}
+                onChange={(e) => setActor(e.target.value as SteeringActor)}
+                className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
+              >
+                <option value="human">human</option>
+                <option value="agent">agent</option>
+                <option value="policy">policy</option>
+              </select>
+            </label>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="md:col-span-4 inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-neutral-950"
             >
-              {(Object.keys(COMMAND_LABELS) as SteeringCommandKind[]).map((k) => (
-                <option key={k} value={k}>
-                  {COMMAND_LABELS[k]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col text-xs text-neutral-500">
-            target id {targetHint ? `(${targetHint})` : "(optional)"}
-            <input
-              type="text"
-              value={targetId}
-              onChange={(e) => setTargetId(e.target.value)}
-              placeholder={targetHint === "individual" ? "ind-…" : ""}
-              className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            />
-          </label>
-          <label className="flex flex-col text-xs text-neutral-500">
-            params (JSON)
-            <input
-              type="text"
-              value={paramsText}
-              onChange={(e) => setParamsText(e.target.value)}
-              placeholder='{"reason": "user requested"}'
-              className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            />
-          </label>
-          <label className="flex flex-col text-xs text-neutral-500">
-            actor
-            <select
-              value={actor}
-              onChange={(e) => setActor(e.target.value as SteeringActor)}
-              className="mt-1 rounded border border-neutral-300 bg-white px-2 py-1.5 font-mono text-xs text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:text-neutral-100"
-            >
-              <option value="human">human</option>
-              <option value="agent">agent</option>
-              <option value="policy">policy</option>
-            </select>
-          </label>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="md:col-span-4 inline-flex items-center justify-center gap-2 rounded bg-emerald-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-emerald-700 disabled:opacity-50 dark:bg-emerald-500 dark:hover:bg-emerald-400 dark:text-neutral-950"
-          >
-            {submitting ? "sending…" : "Issue command"}
-          </button>
-        </form>
-        {submitError ? (
-          <div className="mt-2 text-xs text-rose-600 dark:text-rose-400">{submitError}</div>
-        ) : null}
-      </div>
+              {submitting ? "sending…" : "Issue command"}
+            </button>
+          </form>
+          {submitError ? (
+            <div className="mt-2 text-xs text-rose-600 dark:text-rose-400">{submitError}</div>
+          ) : null}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-950 dark:text-neutral-400">
+          {readOnlyReason ?? "Steering is read-only for this run."}
+        </div>
+      )}
 
       {/* HITL queue */}
-      {hitlOpen.length > 0 ? (
+      {canIssue && hitlOpen.length > 0 ? (
         <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
           <h3 className="mb-2 text-sm font-medium text-amber-800 dark:text-amber-200">
             Human-in-the-loop approvals
@@ -251,7 +264,11 @@ export function SteeringView({ runId }: { runId: string }) {
         {records.length === 0 ? (
           <EmptyState
             title="No steering commands yet"
-            detail="Issue a command above; it will appear here and become visible to any agent polling hutch.steering.poll() against this run id."
+            detail={
+              canIssue
+                ? "Issue a command above; it will appear here and become visible to any agent polling hutch.steering.poll() against this run id."
+                : "No steering commands were logged for this run."
+            }
           />
         ) : (
           <div className="overflow-x-auto">
@@ -302,11 +319,9 @@ export function SteeringView({ runId }: { runId: string }) {
       </div>
 
       <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-4 text-xs text-neutral-500 dark:border-neutral-800 dark:bg-neutral-950">
-        Commands are stored in-memory on the daemon; every issue+ack is also
-        mirrored as a <code>steering_command</code> event so the audit trail
-        survives a restart. An agent calling{" "}
-        <code className="font-mono">hutch.steering.poll()</code> in its loop will
-        receive each pending command exactly once.
+        Commands are available only for running runs that advertise the steering
+        capability. Historical steering commands are shown read-only from the
+        event log when present.
       </div>
     </div>
   );

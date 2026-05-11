@@ -17,6 +17,7 @@ import { useMemo } from "react";
 
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
+import { formatUsd, isFiniteNumber, sumObservedNumbers } from "@/lib/observed";
 import type { OperatorEvent } from "@/lib/types";
 
 const KIND_COLOR: Record<string, string> = {
@@ -41,9 +42,11 @@ interface KindRow {
   count: number;
   color: string;
   totalCostUsd: number;
+  costCount: number;
   avgCostUsd: number | null;
   totalTokensIn: number;
   totalTokensOut: number;
+  tokenCount: number;
   fanout: number;
   crossover: number;
 }
@@ -61,11 +64,11 @@ function buildKindRows(operators: OperatorEvent[]): KindRow[] {
         .map((o) => o.payload.cost_usd)
         .filter((v): v is number => typeof v === "number" && Number.isFinite(v));
       const tokensIn = ops
-        .map((o) => o.payload.tokens_in ?? 0)
-        .reduce((a, b) => a + b, 0);
+        .map((o) => o.payload.tokens_in)
+        .filter(isFiniteNumber);
       const tokensOut = ops
-        .map((o) => o.payload.tokens_out ?? 0)
-        .reduce((a, b) => a + b, 0);
+        .map((o) => o.payload.tokens_out)
+        .filter(isFiniteNumber);
       const fanouts = ops.map((o) => o.payload.parent_ids.length);
       const avgFanout =
         fanouts.length > 0 ? fanouts.reduce((a, b) => a + b, 0) / fanouts.length : 0;
@@ -75,9 +78,11 @@ function buildKindRows(operators: OperatorEvent[]): KindRow[] {
         count: ops.length,
         color: KIND_COLOR[kind] ?? "#6b7280",
         totalCostUsd: costs.reduce((a, b) => a + b, 0),
+        costCount: costs.length,
         avgCostUsd: costs.length > 0 ? costs.reduce((a, b) => a + b, 0) / costs.length : null,
-        totalTokensIn: tokensIn,
-        totalTokensOut: tokensOut,
+        totalTokensIn: tokensIn.reduce((a, b) => a + b, 0),
+        totalTokensOut: tokensOut.reduce((a, b) => a + b, 0),
+        tokenCount: tokensIn.length + tokensOut.length,
         fanout: avgFanout,
         crossover,
       };
@@ -131,7 +136,8 @@ export function OperatorsView({ operators }: { operators: OperatorEvent[] }) {
     );
   }
 
-  const totalCost = kindRows.reduce((a, r) => a + r.totalCostUsd, 0);
+  const loggedCost = sumObservedNumbers(operators, (o) => o.payload.cost_usd);
+  const hasLoggedTokens = kindRows.some((r) => r.tokenCount > 0);
   const totalCrossover = kindRows.reduce((a, r) => a + r.crossover, 0);
   const distinctKinds = kindRows.length;
 
@@ -149,11 +155,13 @@ export function OperatorsView({ operators }: { operators: OperatorEvent[] }) {
           value={totalCrossover}
           hint="parent_ids ≥ 2"
         />
-        <StatCard
-          label="Total LLM cost"
-          value={`$${totalCost.toFixed(4)}`}
-          hint="sum of operator.cost_usd"
-        />
+        {loggedCost.observed ? (
+          <StatCard
+            label="Total LLM cost"
+            value={formatUsd(loggedCost.total)}
+            hint={`sum of ${loggedCost.count} logged value${loggedCost.count === 1 ? "" : "s"}`}
+          />
+        ) : null}
       </div>
 
       {/* per-kind breakdown */}
@@ -212,8 +220,12 @@ export function OperatorsView({ operators }: { operators: OperatorEvent[] }) {
                   <th className="py-1 pr-3">Kind</th>
                   <th className="py-1 pr-3 text-right">Count</th>
                   <th className="py-1 pr-3 text-right">Avg fanout</th>
-                  <th className="py-1 pr-3 text-right">Cost (sum)</th>
-                  <th className="py-1 text-right">Tokens (in/out)</th>
+                  {loggedCost.observed ? (
+                    <th className="py-1 pr-3 text-right">Cost (sum)</th>
+                  ) : null}
+                  {hasLoggedTokens ? (
+                    <th className="py-1 text-right">Tokens (in/out)</th>
+                  ) : null}
                 </tr>
               </thead>
               <tbody className="divide-y divide-neutral-100 text-neutral-700 dark:divide-neutral-900 dark:text-neutral-300">
@@ -232,14 +244,18 @@ export function OperatorsView({ operators }: { operators: OperatorEvent[] }) {
                     <td className="py-1 pr-3 text-right font-mono text-xs">
                       {r.fanout.toFixed(2)}
                     </td>
-                    <td className="py-1 pr-3 text-right font-mono text-xs">
-                      {r.totalCostUsd > 0 ? `$${r.totalCostUsd.toFixed(4)}` : "—"}
-                    </td>
-                    <td className="py-1 text-right font-mono text-xs text-neutral-500">
-                      {r.totalTokensIn || r.totalTokensOut
-                        ? `${r.totalTokensIn} / ${r.totalTokensOut}`
-                        : "—"}
-                    </td>
+                    {loggedCost.observed ? (
+                      <td className="py-1 pr-3 text-right font-mono text-xs">
+                        {r.costCount > 0 ? formatUsd(r.totalCostUsd) : "—"}
+                      </td>
+                    ) : null}
+                    {hasLoggedTokens ? (
+                      <td className="py-1 text-right font-mono text-xs text-neutral-500">
+                        {r.tokenCount > 0
+                          ? `${r.totalTokensIn} / ${r.totalTokensOut}`
+                          : "—"}
+                      </td>
+                    ) : null}
                   </tr>
                 ))}
               </tbody>

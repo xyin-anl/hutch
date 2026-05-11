@@ -65,6 +65,20 @@ describe("run stream websocket", () => {
     sub.close();
   });
 
+  it("reports open and close status", () => {
+    process.env.NEXT_PUBLIC_HUTCH_DAEMON_URL = "http://daemon.test";
+    const onOpen = vi.fn();
+    const onClose = vi.fn();
+    const sub = subscribeRunStream("run-1", vi.fn(), undefined, onOpen, onClose);
+
+    FakeWebSocket.instances[0]?.onopen?.();
+    FakeWebSocket.instances[0]?.onclose?.();
+
+    expect(onOpen).toHaveBeenCalledOnce();
+    expect(onClose).toHaveBeenCalledOnce();
+    sub.close();
+  });
+
   it("reconnects after close with backoff", () => {
     vi.useFakeTimers();
     process.env.NEXT_PUBLIC_HUTCH_DAEMON_URL = "http://daemon.test";

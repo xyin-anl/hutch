@@ -21,9 +21,10 @@ function formatTimestamp(ns: number | null | undefined): string {
  * the full operator + individual events) — here we only have aggregate
  * kind names, but they're enough to pick the right badge for the list:
  * self-improvement runs always emit ``self_mod``; tree-search runs
- * always emit ``tree_expansion``; otherwise we fall back to "linear"
- * for the simplest kind set and "evolutionary" once descriptors or
- * migrations show up.
+ * always emit ``tree_expansion``; descriptor/migration events imply
+ * evolutionary search. With only aggregate event-kind names, operator shape is
+ * unavailable, so the fallback is deliberately "unknown" rather than
+ * pretending a run is linear.
  */
 function inferKindFromKindsSeen(kinds: EventKind[] | undefined): SystemKind {
   const set = new Set(kinds ?? []);
@@ -32,10 +33,12 @@ function inferKindFromKindsSeen(kinds: EventKind[] | undefined): SystemKind {
   if (set.has("descriptor") || set.has("migration") || set.has("pareto_snapshot")) {
     return "evolutionary";
   }
-  return "linear";
+  return "unknown";
 }
 
 const KIND_BADGE_STYLES: Record<SystemKind, string> = {
+  unknown:
+    "bg-neutral-100 text-neutral-700 border-neutral-200 dark:bg-neutral-900 dark:text-neutral-400 dark:border-neutral-800",
   linear:
     "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-900",
   evolutionary:
@@ -124,7 +127,7 @@ function RunTable({ runs }: { runs: RunSummary[] }) {
         </thead>
         <tbody className="divide-y divide-neutral-100 dark:divide-neutral-900">
           {runs.map((run) => {
-            const kind = inferKindFromKindsSeen(run.kinds_seen);
+            const kind = run.system_kind ?? inferKindFromKindsSeen(run.kinds_seen);
             const status = run.status ?? (run.ended_at_ns ? "finished" : "running");
             return (
               <tr

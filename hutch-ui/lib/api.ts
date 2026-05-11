@@ -19,6 +19,8 @@ import type {
   SelfModEvent,
   SteeringActor,
   SteeringCommandKind,
+  StreamEvent,
+  StreamEventsPage,
   TreeExpansionEvent,
 } from "@/lib/types";
 
@@ -95,6 +97,23 @@ export const getClaims = (runId: string): Promise<ClaimEvent[]> =>
   fetcher<ClaimEvent[]>(`/runs/${encodeURIComponent(runId)}/claims`);
 export const getEvidence = (runId: string): Promise<EvidenceEvent[]> =>
   fetcher<EvidenceEvent[]>(`/runs/${encodeURIComponent(runId)}/evidence`);
+export const getStreamEvents = (runId: string, limit = 200): Promise<StreamEvent[]> =>
+  fetcher<StreamEvent[]>(
+    `/runs/${encodeURIComponent(runId)}/events?event_kind=stream_event&limit=${limit}`,
+  );
+export const getStreamEventsPage = (
+  runId: string,
+  params: { label?: string; query?: string; offset?: number; limit?: number } = {},
+): Promise<StreamEventsPage> => {
+  const search = new URLSearchParams();
+  if (params.label) search.set("label", params.label);
+  if (params.query) search.set("query", params.query);
+  search.set("offset", String(params.offset ?? 0));
+  search.set("limit", String(params.limit ?? 200));
+  return fetcher<StreamEventsPage>(
+    `/runs/${encodeURIComponent(runId)}/stream_events?${search.toString()}`,
+  );
+};
 
 // ---------- steering ------------------------------------------------------
 

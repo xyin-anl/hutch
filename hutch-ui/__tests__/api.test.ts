@@ -1,6 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { ackSteering, fetcher, issueSteering } from "@/lib/api";
+import {
+  ackSteering,
+  fetcher,
+  getStreamEvents,
+  getStreamEventsPage,
+  issueSteering,
+} from "@/lib/api";
 
 const OLD_ENV = process.env;
 
@@ -65,6 +71,38 @@ describe("daemon API client", () => {
     expect(fetchMock).toHaveBeenCalledWith(
       "/steering/run%2F1/cmd%2F1/ack",
       expect.objectContaining({ method: "POST" }),
+    );
+  });
+
+  it("uses bounded stream-event helpers", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({ events: [], total: 0, offset: 20, limit: 10 }),
+      text: async () => "ok",
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await getStreamEventsPage("run 1", {
+      label: "cvevolve_message",
+      query: "alpha",
+      offset: 20,
+      limit: 10,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/runs/run%201/stream_events?label=cvevolve_message&query=alpha&offset=20&limit=10",
+      expect.any(Object),
+    );
+
+    fetchMock.mockResolvedValueOnce({
+      ok: true,
+      json: async () => [],
+      text: async () => "ok",
+    });
+    await getStreamEvents("run 1");
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "/runs/run%201/events?event_kind=stream_event&limit=200",
+      expect.any(Object),
     );
   });
 });
