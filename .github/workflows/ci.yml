@@ -1,0 +1,138 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Disable Next.js telemetry on every CI machine.
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    name: Source hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Secret scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Reject local secrets and generated artifacts
+        run: |
+          set -euo pipefail
+          forbidden=$(
+            find . \
+              -path ./.git -prune -o \
+              \( \
+                -name '.env' -o \
+                -name '.env.*' -o \
+                -name '.DS_Store' -o \
+                -name '__MACOSX' -o \
+                -name '__pycache__' -o \
+                -name '*.pyc' -o \
+                -name 'tsconfig.tsbuildinfo' -o \
+                -name '.pytest_cache' -o \
+                -name '.mypy_cache' -o \
+                -name '.ruff_cache' -o \
+                -name '.hypothesis' -o \
+                -name '.venv' -o \
+                -name 'node_modules' -o \
+                -name '.next' -o \
+                -name 'out' -o \
+                -name 'dist' -o \
+                -name 'build' -o \
+                -name 'uv.lock' \
+              \) -print | grep -v '^\./\.env.example$' || true
+          )
+          if [ -n "$forbidden" ]; then
+            echo "$forbidden"
+            exit 1
+          fi
+
+  python:
+    name: Python (hutch-py)
+    needs: hygiene
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    defaults:
+      run:
+        working-directory: hutch-py
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Create venv and install
+        run: |
+          uv venv --python ${{ matrix.python-version }} .venv
+          uv pip install -e ".[dev,otel,publish,skill-eval]"
+          uv pip install pip-audit
+
+      - name: Dependency audit
+        run: .venv/bin/pip-audit
+
+      - name: Lint (ruff)
+        run: |
+          .venv/bin/ruff check src tests
+          .venv/bin/ruff format --check src tests
+
+      - name: Type-check (mypy --strict)
+        run: .venv/bin/mypy --strict src
+
+      - name: Test (pytest)
+        run: .venv/bin/pytest -ra
+
+  ui:
+    name: UI (hutch-ui)
+    needs: hygiene
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: hutch-ui
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: hutch-ui/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type-check
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test (vitest)
+        run: pnpm test
+
+      - name: Build (next build)
+        run: pnpm build
+
+      - name: Dependency audit
+        run: pnpm audit --audit-level high

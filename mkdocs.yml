@@ -1,0 +1,115 @@
+site_name: The Hutch
+site_description: Observability, steering, and provenance for autonomous-research agents.
+site_url: https://xyin.github.io/hutch/
+site_author: The Hutch contributors
+
+repo_url: https://github.com/xyin/hutch
+repo_name: xyin/hutch
+edit_uri: edit/main/docs/
+
+docs_dir: docs
+copyright: Copyright &copy; The Hutch contributors. Apache-2.0.
+
+theme:
+  name: material
+  language: en
+  features:
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.tracking
+    - navigation.footer
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+    - content.tabs.link
+    - content.action.edit
+    - toc.follow
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: green
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: black
+      accent: green
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  font:
+    text: Inter
+    code: JetBrains Mono
+  icon:
+    repo: fontawesome/brands/github
+    edit: material/pencil
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/xyin/hutch
+      name: Hutch on GitHub
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/thehutch/
+      name: thehutch on PyPI
+  generator: false
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - def_list
+  - toc:
+      permalink: true
+      permalink_title: Anchor link to this section
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tilde
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Concepts: concepts.md
+  - Distribution: distribution.md
+  - Reference:
+      - Event schema: schema.md
+      - Adapters: adapters.md
+      - Steering: steering.md
+  - Integrations:
+      - OpenTelemetry: otel.md
+      - OpenLineage: openlineage.md
+      - Publication & provenance: publication.md
+  - Security: security.md
+  - Blog:
+      - "v0.1.0 launch (May 2026)": blog/2026-05-06-hutch-v0.1.0.md

@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+.turbo
+.pnpm-store
+*.log
+*.tsbuildinfo
+.env*.local
+.vercel
+coverage

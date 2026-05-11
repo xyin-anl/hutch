@@ -1,0 +1,136 @@
+name: Publish to PyPI
+
+# Triggered by pushing a tag like v0.1.0. Uses PyPI Trusted Publishing
+# (OIDC, no API token in secrets) — configure on PyPI under
+# https://pypi.org/manage/account/publishing/ before tagging.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+# Required for OIDC trust exchange with PyPI.
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+
+jobs:
+  build:
+    name: Build wheel + sdist
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Release preflight
+        run: |
+          set -euo pipefail
+          test -s LICENSE
+          test -s hutch-py/LICENSE
+          if find . \
+              -path ./.git -prune -o \
+              \( \
+                -name '.env' -o \
+                -name '.env.*' -o \
+                -name '.DS_Store' -o \
+                -name '__MACOSX' -o \
+                -name '__pycache__' -o \
+                -name '*.pyc' -o \
+                -name 'tsconfig.tsbuildinfo' -o \
+                -name '.pytest_cache' -o \
+                -name '.mypy_cache' -o \
+                -name '.ruff_cache' -o \
+                -name '.hypothesis' -o \
+                -name '.venv' -o \
+                -name 'node_modules' -o \
+                -name '.next' -o \
+                -name 'out' -o \
+                -name 'dist' -o \
+                -name 'build' -o \
+                -name 'uv.lock' \
+              \) \
+              -print | grep -v '^\./\.env.example$' | grep -q .; then
+            echo "release tree contains local secrets or generated artifacts"
+            exit 1
+          fi
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.33.2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: pnpm
+          cache-dependency-path: hutch-ui/pnpm-lock.yaml
+
+      - name: Build the UI bundle
+        working-directory: hutch-ui
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build:daemon
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install 3.11
+
+      - name: Build sdist + wheel
+        working-directory: hutch-py
+        run: |
+          uv build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: hutch-py/dist/*
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/thehutch
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish via Trusted Publisher
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+
+  github-release:
+    name: Create GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+      - name: Resolve tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/tags/}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: ${{ steps.tag.outputs.tag }}
+          generate_release_notes: true
+          files: dist/*

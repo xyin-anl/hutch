@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Light is the default. The user (or system, via a future media-query
+ * fallback) flips the html element's `dark` class to switch palettes. */
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: #ffffff;
+  color: #18181b;
+  font-family:
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+html.dark body {
+  background: #0b0d10;
+  color: #e6e8eb;
+}

@@ -1,0 +1,74 @@
+# macOS
+.DS_Store
+
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
+.tox/
+.nox/
+.python-version
+
+# uv / venv
+.venv/
+venv/
+env/
+# Python lockfiles are local for this library package. The UI lockfile is
+# committed at hutch-ui/pnpm-lock.yaml.
+uv.lock
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.turbo/
+*.log
+.npm/
+.pnpm-store/
+
+# Hutch-specific runtime data
+.hutch/
+~/.hutch/
+*.duckdb
+*.duckdb.wal
+blobs/
+fallback-events.jsonl
+
+# Built UI bundle copied into the Python package by `pnpm build:daemon`.
+# The committed package may include a release bundle, but local rebuilds and
+# generated Next output should not be added accidentally.
+hutch-ui/out/
+hutch-ui/tsconfig.tsbuildinfo
+
+# MkDocs build output (rendered on CI and pushed to gh-pages branch).
+site/
+
+# OS / misc
+Thumbs.db
+
+# Claude Code editor scratch — local launch.json points at developer-specific paths.
+.claude/
+
+# Local secrets — API keys live in .env, never committed.
+.env
+.env.*
+!.env.example

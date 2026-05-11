@@ -1,0 +1,38 @@
+/* Brand overlay so the docs accent matches the Hutch UI's emerald-600
+ * (used for active tabs, primary buttons, and the live-status dot in
+ * hutch-ui). The light scheme uses emerald-600 for legible contrast on
+ * white backgrounds; the dark scheme uses emerald-400 for the same
+ * reason against the slate scheme's dark canvas.
+ *
+ * The Hutch UI's source of truth is hutch-ui/components and Tailwind's
+ * `emerald-*` palette: emerald-600 = #059669, emerald-400 = #34d399. */
+
+:root,
+[data-md-color-scheme="default"] {
+  --md-accent-fg-color:               #059669;
+  --md-accent-fg-color--transparent:  rgba(5, 150, 105, 0.10);
+  --md-typeset-a-color:               #059669;
+
+  /* Inline code keeps Material's default chrome; only the syntax accents
+   * (operators, link tokens) pick up the brand color. */
+  --md-code-hl-operator-color:        #059669;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-accent-fg-color:               #34d399;
+  --md-accent-fg-color--transparent:  rgba(52, 211, 153, 0.12);
+  --md-typeset-a-color:               #34d399;
+  --md-code-hl-operator-color:        #34d399;
+}
+
+/* Make embedded screenshots feel like UI screenshots: subtle border,
+ * slight rounding, and a soft drop-shadow on hover. */
+.md-typeset img[src*="/screenshots/"] {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 6px;
+  transition: box-shadow 0.15s ease;
+}
+
+.md-typeset img[src*="/screenshots/"]:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}

@@ -1,0 +1,153 @@
+[project]
+name = "thehutch"
+version = "0.1.0"
+description = "The Hutch — observability, steering, and provenance for autonomous-research agents."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "Apache-2.0" }
+authors = [{ name = "The Hutch contributors" }]
+keywords = [
+    "autoresearch", "evolutionary-search", "observability",
+    "tensorboard", "agents", "llm", "map-elites",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "typer>=0.13",
+    "pydantic>=2.9",
+    "duckdb>=1.1",
+    "httpx>=0.27",
+]
+license-files = ["LICENSE"]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.7",
+    "mypy>=1.13",
+    "pytest>=8",
+    "pytest-asyncio>=0.24",
+    "httpx>=0.27",
+    "hypothesis>=6.115",
+]
+# LLM-eval extras — only needed by `hutch-skill/tests/`. Kept out of `dev`
+# so most contributors can run the suite without an API key. Install with
+# `uv pip install -e .[skill-eval]`.
+skill-eval = [
+    "openai>=1.50",
+    "anthropic>=0.40",
+    "python-dotenv>=1.0",
+]
+llm = [
+    "openai>=1.50",
+    "anthropic>=0.40",
+    "python-dotenv>=1.0",
+]
+# Optional OpenTelemetry bridge. Install with
+# `pip install thehutch[otel]` to enable the `research.*` span emitter.
+# When the extra is missing the SDK runs without OTel emission and logs
+# a one-time warning if HUTCH_OTEL_ENDPOINT is set.
+otel = [
+    "opentelemetry-api>=1.27",
+    "opentelemetry-sdk>=1.27",
+    "opentelemetry-exporter-otlp-proto-http>=1.27",
+]
+# Optional publication-export formats.
+# ARA + RO-Crate + Turtle PROV-O work without this extra. Only the
+# JSON-LD / N-Triples / RDF-XML PROV serialisations need rdflib.
+publish = [
+    "rdflib>=7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/xyin/hutch"
+Repository = "https://github.com/xyin/hutch"
+Issues = "https://github.com/xyin/hutch/issues"
+
+[project.scripts]
+hutch = "hutch.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hutch"]
+
+[tool.hatch.build.targets.sdist]
+include = ["src/hutch", "README.md", "LICENSE", "../README.md", "../LICENSE"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # isort
+    "N",    # pep8-naming
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "S",    # flake8-bandit
+    "A",    # flake8-builtins
+    "C4",   # flake8-comprehensions
+    "RUF",  # ruff-specific
+]
+ignore = [
+    "S101",  # asserts are fine
+]
+
+[tool.ruff.lint.flake8-bugbear]
+# fastapi.Depends and typer.Option / typer.Argument are designed to be called
+# in argument defaults — that's the framework's idiomatic API. Without this
+# allowlist B008 fires on every FastAPI / Typer endpoint.
+extend-immutable-calls = [
+    "fastapi.Depends",
+    "typer.Argument",
+    "typer.Option",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests use ASCII multiplication-sign in comments and helpers that mirror
+# schema field names (which sometimes shadow Python builtins).
+"tests/**/*.py" = ["S", "E501", "A002", "RUF003"]
+# log_artifact intentionally mirrors the schema field names ``hash`` / ``format``
+# even though they shadow Python builtins. The SDK is the user-facing surface;
+# changing the field names here would diverge from the canonical model.
+"src/hutch/sdk/api.py" = ["A002"]
+# `hutch import --format <name>` reads more naturally with `format` than
+# `format_name`; same A002 trade-off as the SDK API surface.
+"src/hutch/cli/__init__.py" = ["A002"]
+# Fixture generators use `random.Random(seed)` for deterministic synthetic
+# data and mirror upstream JSON field names that occasionally shadow
+# Python builtins (e.g. `id` in AIDE journal nodes).
+"src/hutch/_fixtures/**/*.py" = ["S311", "A002"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+plugins = ["pydantic.mypy"]
+mypy_path = "src"
+namespace_packages = true
+explicit_package_bases = true
+
+[[tool.mypy.overrides]]
+module = ["uvicorn.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+addopts = "-ra --strict-markers"
