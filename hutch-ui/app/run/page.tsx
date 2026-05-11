@@ -348,6 +348,7 @@ function RunDashboard() {
               ) : tab === "objectives" ? (
                 <ObjectivesView
                   fitness={fits}
+                  operators={ops}
                   scoreDirections={detail.data?.score_directions}
                 />
               ) : tab === "operators" ? (

@@ -3,12 +3,13 @@
 import { useMemo, useState } from "react";
 
 import { EmptyState } from "@/components/ui/EmptyState";
-import type { FitnessEvent, ScoreDirection } from "@/lib/types";
+import type { FitnessEvent, OperatorEvent, ScoreDirection } from "@/lib/types";
 
 // ---------- shared types --------------------------------------------------
 
 interface PointSample {
   individualId: string;
+  operatorKind: string;
   scores: Record<string, number>;
   ts: number;
 }
@@ -23,6 +24,28 @@ const SUBMODE_LABEL: Record<SubMode, string> = {
   distribution: "Distribution",
   parallel: "Parallel coords",
 };
+
+const OPERATION_COLOR: Record<string, string> = {
+  seed: "#9ca3af",
+  propose: "#3b82f6",
+  refine: "#10b981",
+  mutate: "#22c55e",
+  crossover: "#8b5cf6",
+  select: "#f59e0b",
+  diversify: "#06b6d4",
+  self_modify: "#ef4444",
+  distill: "#fb7185",
+  migrate: "#f97316",
+  meta_mutate: "#eab308",
+  tree_expand: "#8b5cf6",
+  edit_diff: "#10b981",
+  evaluate: "#737373",
+  review: "#737373",
+};
+
+function colorForOperation(kind: string): string {
+  return OPERATION_COLOR[kind] ?? "#737373";
+}
 
 // ---------- direction helpers ---------------------------------------------
 
@@ -58,7 +81,14 @@ function makeResolveDirection(
 
 // ---------- shared data prep ----------------------------------------------
 
-function collectPoints(fitness: FitnessEvent[]): PointSample[] {
+function collectPoints(
+  fitness: FitnessEvent[],
+  operators: OperatorEvent[],
+): PointSample[] {
+  const operationByIndividual = new Map<string, string>();
+  for (const op of operators) {
+    operationByIndividual.set(op.payload.child_id, op.payload.kind);
+  }
   const out: PointSample[] = [];
   for (const f of fitness) {
     if (f.payload.invalid_reason) continue;
@@ -71,6 +101,7 @@ function collectPoints(fitness: FitnessEvent[]): PointSample[] {
     if (Object.keys(valid).length >= 1) {
       out.push({
         individualId: f.payload.individual_id,
+        operatorKind: operationByIndividual.get(f.payload.individual_id) ?? "seed",
         scores: valid,
         ts: f.timestamp_ns,
       });
@@ -92,12 +123,14 @@ function rankObjectives(points: PointSample[]): string[] {
 
 export function ObjectivesView({
   fitness,
+  operators,
   scoreDirections,
 }: {
   fitness: FitnessEvent[];
+  operators: OperatorEvent[];
   scoreDirections?: Record<string, ScoreDirection>;
 }) {
-  const points = useMemo(() => collectPoints(fitness), [fitness]);
+  const points = useMemo(() => collectPoints(fitness, operators), [fitness, operators]);
   const objectives = useMemo(() => rankObjectives(points), [points]);
   const [mode, setMode] = useState<SubMode>("tradeoff");
 
@@ -118,6 +151,16 @@ export function ObjectivesView({
   //  - best-so-far / distribution: any number, including 1
   const tradeoffAvailable = objectives.length >= 2;
   const parallelAvailable = objectives.length >= 3;
+  const isModeAvailable = (m: SubMode) =>
+    !(
+      (m === "tradeoff" && !tradeoffAvailable) ||
+      (m === "parallel" && !parallelAvailable)
+    );
+  const effectiveMode = isModeAvailable(mode)
+    ? mode
+    : tradeoffAvailable
+      ? "tradeoff"
+      : "best-so-far";
 
   return (
     <div className="space-y-4">
@@ -128,7 +171,7 @@ export function ObjectivesView({
               const disabled =
                 (m === "tradeoff" && !tradeoffAvailable) ||
                 (m === "parallel" && !parallelAvailable);
-              const active = mode === m;
+              const active = effectiveMode === m;
               return (
                 <button
                   key={m}
@@ -163,25 +206,25 @@ export function ObjectivesView({
         </div>
       </div>
 
-      {mode === "tradeoff" && tradeoffAvailable ? (
+      {effectiveMode === "tradeoff" && tradeoffAvailable ? (
         <TradeoffPanel
           points={points}
           objectives={objectives}
           resolveDirection={resolveDirection}
         />
-      ) : mode === "best-so-far" ? (
+      ) : effectiveMode === "best-so-far" ? (
         <BestSoFarPanel
           points={points}
           objectives={objectives}
           resolveDirection={resolveDirection}
         />
-      ) : mode === "distribution" ? (
+      ) : effectiveMode === "distribution" ? (
         <DistributionPanel
           points={points}
           objectives={objectives}
           resolveDirection={resolveDirection}
         />
-      ) : mode === "parallel" && parallelAvailable ? (
+      ) : effectiveMode === "parallel" && parallelAvailable ? (
         <ParallelPanel
           points={points}
           objectives={objectives}
@@ -202,7 +245,7 @@ export function ObjectivesView({
 // ============================================================================
 
 const PAD = 36;
-const W = 720;
+const W = 920;
 const H = 420;
 
 function paretoFrontIndices(
@@ -554,23 +597,48 @@ function BestSoFarPanel({
       const dir = resolveDirection(m);
       const cmp = (a: number, b: number) => (dir === "higher" ? a > b : a < b);
       let best: number | null = null;
-      const steps: { t: number; v: number }[] = [];
+      const samples = sorted
+        .filter((p) => Number.isFinite(p.scores[m]))
+        .map((p) => ({
+          individualId: p.individualId,
+          operatorKind: p.operatorKind,
+          t: (p.ts - tsMin) / tsR,
+          v: p.scores[m]!,
+          improves: false,
+        }));
+      const steps: {
+        t: number;
+        v: number;
+        individualId: string;
+        operatorKind: string;
+      }[] = [];
+      const improvingIds = new Set<string>();
       for (const p of sorted) {
         const v = p.scores[m];
         if (!Number.isFinite(v)) continue;
         if (best === null || cmp(v!, best)) {
           best = v!;
-          steps.push({ t: (p.ts - tsMin) / tsR, v: best });
+          steps.push({
+            t: (p.ts - tsMin) / tsR,
+            v: best,
+            individualId: p.individualId,
+            operatorKind: p.operatorKind,
+          });
+          improvingIds.add(p.individualId);
         }
       }
-      return { metric: m, dir, steps, finalBest: best };
+      for (const sample of samples) {
+        sample.improves = improvingIds.has(sample.individualId);
+      }
+      const operations = Array.from(new Set(samples.map((s) => s.operatorKind))).sort();
+      return { metric: m, dir, samples, steps, operations, finalBest: best };
     });
   }, [sorted, objectives, resolveDirection, tsMin, tsR]);
 
   const PADX = 48;
-  const PADY = 28;
-  const PW = 720;
-  const PH = 280;
+  const PADY = 34;
+  const PW = 920;
+  const PH = 320;
 
   return (
     <div className="space-y-4">
@@ -580,10 +648,10 @@ function BestSoFarPanel({
         the schema-declared direction (or a name-based fallback). One panel
         per metric; the labelled value is the final best.
       </p>
-      <div className="grid gap-4 md:grid-cols-2">
-        {series.map(({ metric, dir, steps, finalBest }) => {
+      <div className="space-y-4">
+        {series.map(({ metric, dir, samples, steps, operations, finalBest }) => {
           if (steps.length === 0) return null;
-          const vs = steps.map((s) => s.v);
+          const vs = samples.map((s) => s.v);
           // Normalise to [0,1] in the "better" direction so the y-axis
           // always points up = better.
           const vMin = Math.min(...vs);
@@ -621,7 +689,7 @@ function BestSoFarPanel({
                   · {steps.length} improvement{steps.length === 1 ? "" : "s"}
                 </span>
               </div>
-              <svg viewBox={`0 0 ${PW} ${PH}`} className="h-44 w-full">
+              <svg viewBox={`0 0 ${PW} ${PH}`} className="h-72 w-full">
                 <line
                   x1={PADX}
                   y1={PH - PADY}
@@ -654,19 +722,37 @@ function BestSoFarPanel({
                 >
                   {dir === "higher" ? vMin.toFixed(2) : vMax.toFixed(2)}
                 </text>
-                <path d={path} fill="none" stroke="#059669" strokeWidth={1.5} />
-                {steps.map((s, i) => (
+                <path d={path} fill="none" stroke="#059669" strokeWidth={1.75} />
+                {samples.map((s) => (
                   <circle
-                    key={i}
+                    key={`${s.individualId}-${s.t}-${s.v}`}
                     cx={sx(s.t)}
                     cy={sy(s.v)}
-                    r={2.5}
-                    fill="#059669"
+                    r={s.improves ? 4 : 3}
+                    fill={colorForOperation(s.operatorKind)}
+                    fillOpacity={s.improves ? 0.95 : 0.45}
+                    className="stroke-white dark:stroke-neutral-950"
+                    strokeWidth={s.improves ? 1.25 : 0.5}
                   >
-                    <title>{`${metric} = ${s.v.toFixed(3)}`}</title>
+                    <title>{`${s.individualId}\n${s.operatorKind}\n${metric} = ${s.v.toFixed(3)}${s.improves ? "\nimproved best" : ""}`}</title>
                   </circle>
                 ))}
               </svg>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-neutral-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="h-0.5 w-5 bg-emerald-600" />
+                  incumbent best
+                </span>
+                {operations.map((operation) => (
+                  <span key={operation} className="flex items-center gap-1.5">
+                    <span
+                      className="h-2 w-2 rounded-full"
+                      style={{ background: colorForOperation(operation) }}
+                    />
+                    {operation}
+                  </span>
+                ))}
+              </div>
             </div>
           );
         })}
@@ -690,8 +776,8 @@ function DistributionPanel({
 }) {
   const PADX = 36;
   const PADY = 28;
-  const PW = 480;
-  const PH = 200;
+  const PW = 920;
+  const PH = 260;
   const BINS = 16;
 
   return (
@@ -702,7 +788,7 @@ function DistributionPanel({
         the &quot;better&quot; direction; the histogram itself isn&apos;t flipped
         — read it as raw observed values.
       </p>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-4">
         {objectives.map((metric) => {
           const dir = resolveDirection(metric);
           const values = points
@@ -733,7 +819,7 @@ function DistributionPanel({
                   <span className="font-mono">{values.length}</span>
                 </span>
               </div>
-              <svg viewBox={`0 0 ${PW} ${PH}`} className="h-40 w-full">
+              <svg viewBox={`0 0 ${PW} ${PH}`} className="h-64 w-full">
                 <line
                   x1={PADX}
                   y1={PH - PADY}
@@ -799,7 +885,7 @@ function ParallelPanel({
 }) {
   const PADX = 60;
   const PADY = 36;
-  const PW = 760;
+  const PW = 920;
   const PH = 360;
 
   // Per-metric min/max across observed values.

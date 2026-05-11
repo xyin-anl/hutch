@@ -103,16 +103,29 @@ export function PopulationView({
     (i) => i.payload.generation_index !== null && i.payload.generation_index !== undefined,
   );
   const xLabel = haveExplicitGen ? "Generation" : "Fitness sample (timestamp order)";
+  const singleSampleGenerations = stats.every((s) => s.count === 1);
 
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-950">
         <h3 className="text-sm font-medium text-neutral-800 dark:text-neutral-200">
-          Best / median / worst per generation
+          {singleSampleGenerations
+            ? "Fitness by generation"
+            : "Best / median / worst per generation"}
         </h3>
         <p className="text-xs text-neutral-500">
-          Composite is taken from <code>FitnessPayload.composite</code> when set,
-          else score directions are applied so higher comparable values are better.
+          {singleSampleGenerations ? (
+            <>
+              Each generation has one valid fitness sample, so the chart shows
+              the scored candidate trajectory.
+            </>
+          ) : (
+            <>
+              Composite is taken from <code>FitnessPayload.composite</code> when
+              set, else score directions are applied so higher comparable values
+              are better.
+            </>
+          )}
         </p>
         <div className="mt-4 h-72 w-full">
           <ResponsiveContainer>
@@ -149,26 +162,31 @@ export function PopulationView({
               <Line
                 type="monotone"
                 dataKey="best"
+                name={singleSampleGenerations ? "fitness" : "best"}
                 stroke="#059669"
                 strokeWidth={2}
-                dot={false}
+                dot={singleSampleGenerations ? { r: 3 } : false}
               />
-              <Line
-                type="monotone"
-                dataKey="median"
-                stroke="#737373"
-                strokeWidth={1.5}
-                dot={false}
-                strokeDasharray="3 3"
-              />
-              <Line
-                type="monotone"
-                dataKey="worst"
-                stroke="#dc2626"
-                strokeWidth={1.5}
-                dot={false}
-                strokeDasharray="6 3"
-              />
+              {!singleSampleGenerations ? (
+                <>
+                  <Line
+                    type="monotone"
+                    dataKey="median"
+                    stroke="#737373"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="3 3"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="worst"
+                    stroke="#dc2626"
+                    strokeWidth={1.5}
+                    dot={false}
+                    strokeDasharray="6 3"
+                  />
+                </>
+              ) : null}
             </LineChart>
           </ResponsiveContainer>
         </div>
