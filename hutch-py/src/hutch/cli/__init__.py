@@ -6,13 +6,15 @@ This module wires the Typer app and exposes ``main()`` for the
 
 from __future__ import annotations
 
+import hashlib
+import json
 from pathlib import Path
 from typing import Any
 
 import typer
 
 from hutch import __version__
-from hutch.adapters import detect_format
+from hutch.adapters import Adapter, detect_format
 from hutch.daemon.server import run_daemon
 from hutch.sdk import SDKConfig
 from hutch.sdk.transport import build_transport
@@ -43,6 +45,136 @@ def _root(
     ),
 ) -> None:
     """Top-level options."""
+
+
+def _build_sdk_config(db: str | None, daemon_url: str | None) -> SDKConfig:
+    if db and daemon_url:
+        raise typer.BadParameter("Pass either --db or --daemon, not both.")
+
+    if db is not None:
+        return SDKConfig(mode="embedded", db_path=Path(db))
+    if daemon_url is not None:
+        return SDKConfig(mode="daemon", daemon_url=daemon_url, strict=True)
+
+    cfg = SDKConfig.from_env()
+    cfg.strict = True
+    return cfg
+
+
+def _resolve_adapter(path: Path, format: str | None) -> Adapter:
+    from hutch.adapters import REGISTRY
+
+    if format is not None:
+        match_named = next((a for a in REGISTRY if a.name == format), None)
+        if match_named is None:
+            available = ", ".join(a.name for a in REGISTRY)
+            raise typer.BadParameter(f"Unknown adapter {format!r}. Available: {available}")
+        return match_named
+
+    match_detected = detect_format(path)
+    if match_detected is None:
+        available = ", ".join(a.name for a in REGISTRY)
+        raise typer.BadParameter(
+            f"Could not auto-detect a format at {path}. "
+            f"Try --format=<name> with one of: {available}, "
+            "or --llm to generate an adapter on-the-fly."
+        )
+    return match_detected
+
+
+def _watch_with_adapter(
+    *,
+    path: Path,
+    cfg: SDKConfig,
+    adapter: Any,
+    run_id: str | None,
+    project: str | None,
+    poll_interval: float,
+    idle_complete_seconds: float,
+    include_audit: bool,
+    audit_max_text_chars: int,
+    watch_state: Path | None,
+) -> None:
+    from hutch.adapters.watch import watch_adapter
+
+    adapter_options = _adapter_options(
+        adapter=adapter,
+        include_audit=include_audit,
+        audit_max_text_chars=audit_max_text_chars,
+    )
+    state_path = watch_state or _default_watch_state_path(
+        adapter=adapter,
+        path=path,
+        run_id=run_id,
+        adapter_options=adapter_options,
+    )
+    transport = build_transport(cfg)
+    typer.echo(
+        f"watching {path} via adapter {adapter.name!r} → {cfg.mode} (poll={poll_interval}s)…"
+    )
+    typer.echo(f"  watch state: {state_path}")
+    try:
+        result = watch_adapter(
+            adapter,
+            path,
+            transport,
+            run_id=run_id,
+            project=project,
+            poll_interval=poll_interval,
+            idle_complete_seconds=idle_complete_seconds,
+            adapter_options=adapter_options,
+            state_path=state_path,
+            progress=lambda message: typer.echo(f"  {message}"),
+        )
+    finally:
+        transport.close()
+
+    if result.interrupted:
+        typer.echo(f"watch interrupted after {result.events_sent} event(s).")
+    else:
+        typer.echo(f"watch completed after {result.events_sent} event(s).")
+
+
+def _default_watch_state_path(
+    *,
+    adapter: Any,
+    path: Path,
+    run_id: str | None,
+    adapter_options: dict[str, Any],
+) -> Path:
+    key = json.dumps(
+        {
+            "adapter": getattr(adapter, "name", "unknown"),
+            "source_path": str(path.resolve()),
+            "run_id": run_id,
+            "adapter_options": adapter_options,
+        },
+        sort_keys=True,
+        default=str,
+    )
+    digest = hashlib.sha256(key.encode("utf-8")).hexdigest()[:24]
+    filename = f"{getattr(adapter, 'name', 'adapter')}-{digest}.json"
+    return Path.home() / ".hutch" / "watch-state" / filename
+
+
+def _adapter_options(
+    *,
+    adapter: Any,
+    include_audit: bool,
+    audit_max_text_chars: int,
+) -> dict[str, Any]:
+    if audit_max_text_chars < 0:
+        raise typer.BadParameter("--audit-max-text-chars must be zero or greater.")
+    if not include_audit:
+        return {}
+    if getattr(adapter, "name", None) != "cvevolve":
+        raise typer.BadParameter(
+            "--include-audit is currently supported only for --format cvevolve."
+        )
+    return {
+        "include_audit": True,
+        "audit_max_text_chars": audit_max_text_chars,
+    }
 
 
 @app.command("import")
@@ -79,6 +211,42 @@ def import_(
         "--format",
         help="Force a specific adapter instead of auto-detection.",
     ),
+    watch: bool = typer.Option(
+        False,
+        "--watch",
+        help="Poll the adapter source until completion instead of doing a one-shot import.",
+    ),
+    poll_interval: float = typer.Option(
+        2.0,
+        "--poll-interval",
+        min=0.01,
+        help="Seconds between watch polls.",
+    ),
+    idle_complete_seconds: float = typer.Option(
+        60.0,
+        "--idle-complete-seconds",
+        min=0.01,
+        help="For idle-completion adapters, finish after this many quiet seconds.",
+    ),
+    watch_state: Path | None = typer.Option(
+        None,
+        "--watch-state",
+        help="Path to a watch checkpoint JSON file. Defaults under ~/.hutch/watch-state/.",
+    ),
+    include_audit: bool = typer.Option(
+        False,
+        "--include-audit",
+        help=(
+            "For CVEvolve, import high-volume messages.sqlite/tool_calls.sqlite "
+            "audit rows as stream events."
+        ),
+    ),
+    audit_max_text_chars: int = typer.Option(
+        8000,
+        "--audit-max-text-chars",
+        min=0,
+        help="Maximum text characters per imported audit event; 0 disables truncation.",
+    ),
     llm: bool = typer.Option(
         False,
         "--llm",
@@ -96,22 +264,17 @@ def import_(
     ),
 ) -> None:
     """Import a foreign checkpoint into Hutch by auto-detecting its format."""
-    if db and daemon_url:
-        raise typer.BadParameter("Pass either --db or --daemon, not both.")
-
-    from hutch.adapters import REGISTRY
-
-    if db is not None:
-        cfg = SDKConfig(mode="embedded", db_path=Path(db))
-    elif daemon_url is not None:
-        cfg = SDKConfig(mode="daemon", daemon_url=daemon_url, strict=True)
-    else:
-        cfg = SDKConfig.from_env()
-        cfg.strict = True
+    cfg = _build_sdk_config(db, daemon_url)
+    if include_audit and (llm or (path.is_file() and path.suffix == ".ara")):
+        raise typer.BadParameter(
+            "--include-audit is only supported for hand-written CVEvolve adapter imports."
+        )
 
     # ARA tarballs are recognised by extension and round-trip imported via
     # the dedicated unpacker rather than the adapter registry.
     if path.is_file() and path.suffix == ".ara":
+        if watch:
+            raise typer.BadParameter("--watch is only supported for adapter imports.")
         from hutch.export import import_ara
 
         typer.echo(f"importing ARA tarball {path}…")
@@ -134,6 +297,8 @@ def import_(
         return
 
     if llm:
+        if watch:
+            raise typer.BadParameter("--watch is only supported for hand-written adapters.")
         from hutch.importer import import_with_llm
 
         typer.echo(f"running LLM-assisted importer on {path}…")
@@ -181,33 +346,120 @@ def import_(
         typer.echo(f"imported {count} events.")
         return
 
-    if format is not None:
-        match_named = next((a for a in REGISTRY if a.name == format), None)
-        if match_named is None:
-            available = ", ".join(a.name for a in REGISTRY)
-            raise typer.BadParameter(f"Unknown adapter {format!r}. Available: {available}")
-        adapter = match_named
-    else:
-        match_detected = detect_format(path)
-        if match_detected is None:
-            available = ", ".join(a.name for a in REGISTRY)
-            raise typer.BadParameter(
-                f"Could not auto-detect a format at {path}. "
-                f"Try --format=<name> with one of: {available}, "
-                "or --llm to generate an adapter on-the-fly."
-            )
-        adapter = match_detected
+    adapter = _resolve_adapter(path, format)
+    if watch:
+        _watch_with_adapter(
+            path=path,
+            cfg=cfg,
+            adapter=adapter,
+            run_id=run_id,
+            project=project,
+            poll_interval=poll_interval,
+            idle_complete_seconds=idle_complete_seconds,
+            include_audit=include_audit,
+            audit_max_text_chars=audit_max_text_chars,
+            watch_state=watch_state,
+        )
+        return
 
+    adapter_options = _adapter_options(
+        adapter=adapter,
+        include_audit=include_audit,
+        audit_max_text_chars=audit_max_text_chars,
+    )
     transport = build_transport(cfg)
     typer.echo(f"importing {path} via adapter {adapter.name!r} → {cfg.mode}…")
     count = 0
     try:
-        for event in adapter.importer(path, run_id=run_id, project=project):
+        for event in adapter.iter_events(path, run_id=run_id, project=project, **adapter_options):
             transport.send(event)
             count += 1
     finally:
         transport.close()
     typer.echo(f"imported {count} events.")
+
+
+@app.command("watch")
+def watch_(
+    path: Path = typer.Argument(
+        ...,
+        exists=True,
+        file_okay=True,
+        dir_okay=True,
+        help="Path to an adapter source to watch.",
+    ),
+    db: str | None = typer.Option(
+        None,
+        "--db",
+        help=("Write directly to a DuckDB file (embedded mode). Mutually exclusive with --daemon."),
+    ),
+    daemon_url: str | None = typer.Option(
+        None,
+        "--daemon",
+        help="POST events to a running daemon at this URL (e.g. http://localhost:7777).",
+    ),
+    run_id: str | None = typer.Option(
+        None,
+        "--run-id",
+        help="Override the canonical run id (default: derived from the path).",
+    ),
+    project: str | None = typer.Option(
+        None,
+        "--project",
+        help="Tag the run with a project name.",
+    ),
+    format: str | None = typer.Option(
+        None,
+        "--format",
+        help="Force a specific adapter instead of auto-detection.",
+    ),
+    poll_interval: float = typer.Option(
+        2.0,
+        "--poll-interval",
+        min=0.01,
+        help="Seconds between watch polls.",
+    ),
+    idle_complete_seconds: float = typer.Option(
+        60.0,
+        "--idle-complete-seconds",
+        min=0.01,
+        help="For idle-completion adapters, finish after this many quiet seconds.",
+    ),
+    watch_state: Path | None = typer.Option(
+        None,
+        "--watch-state",
+        help="Path to a watch checkpoint JSON file. Defaults under ~/.hutch/watch-state/.",
+    ),
+    include_audit: bool = typer.Option(
+        False,
+        "--include-audit",
+        help=(
+            "For CVEvolve, import high-volume messages.sqlite/tool_calls.sqlite "
+            "audit rows as stream events."
+        ),
+    ),
+    audit_max_text_chars: int = typer.Option(
+        8000,
+        "--audit-max-text-chars",
+        min=0,
+        help="Maximum text characters per imported audit event; 0 disables truncation.",
+    ),
+) -> None:
+    """Continuously import adapter events until the source completes."""
+    cfg = _build_sdk_config(db, daemon_url)
+    adapter = _resolve_adapter(path, format)
+    _watch_with_adapter(
+        path=path,
+        cfg=cfg,
+        adapter=adapter,
+        run_id=run_id,
+        project=project,
+        poll_interval=poll_interval,
+        idle_complete_seconds=idle_complete_seconds,
+        include_audit=include_audit,
+        audit_max_text_chars=audit_max_text_chars,
+        watch_state=watch_state,
+    )
 
 
 export_app = typer.Typer(
