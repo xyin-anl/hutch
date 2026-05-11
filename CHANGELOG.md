@@ -2,6 +2,22 @@
 
 All notable changes to Hutch are documented here.
 
+## 0.1.1 - 2026-05-11
+
+Added CVEvolve live-dashboard support and tightened the dashboard around
+run-declared capabilities.
+
+- Added canonical live run updates, daemon capability reporting, and UI tab
+  gating so historical imports do not show unavailable live controls.
+- Added a CVEvolve adapter with one-shot import, watch mode, deterministic
+  checkpointing, metric-direction preservation, lineage/operator mapping, and
+  optional paged audit-log import from message and tool-call history.
+- Added `hutch watch` for continuously importing adapter-backed runs while
+  they are active.
+- Updated the dashboard with CVEvolve audit views and clearer population and
+  objective charts, including operator-colored objective samples.
+- Added the CVEvolve live dashboard blog post and refreshed screenshots.
+
 ## 0.1.0 - 2026-05-07
 
 Initial alpha release.
